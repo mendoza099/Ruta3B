@@ -41,9 +41,22 @@ MIGRATE = Migrate(app, db, compare_type = True)
 db.init_app(app)
 
 # Allow CORS requests to this API
-CORS(app)
+# Configure CORS with specific origins for security
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
+CORS(app, resources={
+    r"/api/*": {
+        "origins": cors_origins,
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True,
+        "max_age": 3600
+    }
+})
 # Setup the Flask-JWT-Extended extension
-app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+if not app.config["JWT_SECRET_KEY"]:
+    raise RuntimeError("JWT_SECRET_KEY environment variable is not set")
 jwt = JWTManager(app)
 
 
