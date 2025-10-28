@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { Context } from "../store/appContext";
 import { useFormspark } from "@formspark/use-formspark";
+import Swal from "sweetalert2";
 
 export const Contacto = () => {
   const { store, actions } = useContext(Context);

@@ -7,14 +7,39 @@ import { ComentarioFacebook } from "../component/comentarioFacebook";
 export const RutaComida = ({ nombre, descripcion, id, tipo_local }) => {
   const { store, actions } = useContext(Context);
   const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [people, setPeople] = useState(2);
 
   const { theid } = useParams();
 
-  const id2 = store.restaurantes.map((a) => a.id);
+  // Buscar restaurante por ID, no por índice
+  const restaurant = store.restaurantes.find(r => r.id === parseInt(theid));
 
   const handleSubmit = async (e) => {
-    actions.addReserva(store.profiles?.id, date);
-    actions.reservarlocal(store.restaurantes[theid-1]?.id);
+    e.preventDefault();
+    
+    if (!restaurant) {
+      alert("Restaurante no encontrado");
+      return;
+    }
+
+    if (!date) {
+      alert("Por favor selecciona una fecha");
+      return;
+    }
+
+    const success = await actions.createReservation(
+      restaurant.id,
+      date,
+      time || null,
+      people
+    );
+    
+    if (success) {
+      setDate("");
+      setTime("");
+      setPeople(2);
+    }
   };
 
   useEffect(() => {
@@ -35,7 +60,7 @@ export const RutaComida = ({ nombre, descripcion, id, tipo_local }) => {
           {" "}
           <img
             className="w-100"
-            src={store.restaurantes[theid-1]?.foto}
+            src={restaurant?.foto}
             alt=""
           />
         </div>
@@ -55,7 +80,7 @@ export const RutaComida = ({ nombre, descripcion, id, tipo_local }) => {
           <div className="offer">
             <h5>Precio medio del ticket: </h5>
             <strong className="">
-              {store.restaurantes[theid-1]?.precio} €
+              {restaurant?.precio} €
             </strong>
           </div>
 
@@ -64,30 +89,56 @@ export const RutaComida = ({ nombre, descripcion, id, tipo_local }) => {
             style={{ marginLeft: "40px", marginTop: "40px" }}
           >
             <h4>
-              <em>{store.restaurantes[theid-1]?.nombre}</em>
+              <em>{restaurant?.nombre}</em>
             </h4>
             <hr className="w-50 m-auto" />
             <p className="mt-5 fs-4 text">
-              {store.restaurantes[theid-1]?.descripcion}
+              {restaurant?.descripcion}
             </p>
           </div>
         </div>
       </div>
       {store.auth &&
-      store.auth != "" &&
-      store.auth != undefined &&
-      localStorage.getItem("esUsuario") ? (
+      store.auth !== "" &&
+      store.auth !== undefined &&
+      localStorage.getItem("esUsuario") === "true" ? (
         <div className="mt-5 text-center m-auto w-75">
-          <form onSubmit={handleSubmit} action="">
-            <input
-              className="input text-center m-auto"
-              onChange={(e) => setDate(e.target.value)}
-              type="date"
-              id="start"
-              name="trip-start"
-            ></input>
+          <form onSubmit={handleSubmit}>
+            <div className="row justify-content-center">
+              <div className="col-md-3">
+                <label className="form-label">Fecha</label>
+                <input
+                  className="form-control"
+                  onChange={(e) => setDate(e.target.value)}
+                  value={date}
+                  type="date"
+                  required
+                />
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Hora (opcional)</label>
+                <input
+                  className="form-control"
+                  onChange={(e) => setTime(e.target.value)}
+                  value={time}
+                  type="time"
+                />
+              </div>
+              <div className="col-md-2">
+                <label className="form-label">Personas</label>
+                <input
+                  className="form-control"
+                  onChange={(e) => setPeople(e.target.value)}
+                  value={people}
+                  type="number"
+                  min="1"
+                  max="20"
+                />
+              </div>
+            </div>
             <button
-              className="btn btn m-2"
+              type="submit"
+              className="btn btn-lg mt-3"
               style={{ backgroundColor: "rgb(255, 200, 67)", color: "black" }}
             >
               Hacer una reserva

@@ -9,32 +9,34 @@ export const Restaurante = () => {
 
   const [precio, setPrecio] = useState("");
   const [foto, setFoto] = useState("");
+  const [priceUpdated, setPriceUpdated] = useState(false);
 
-  const datos = store.restaurantes;
-
-  const getPrecio = datos.map((a) => a.precio);
-  console.log(getPrecio);
-
-  console.log(store.profileRestaurante?.id);
-
-  const handleSubmitPrice = (e) => {
+  const handleSubmitPrice = async (e) => {
     e.preventDefault();
     const id = store.profileRestaurante?.id;
-    console.log(id);
-    actions.añadirPrecio(id, precio);
+    await actions.añadirPrecio(id, precio);
+    setPriceUpdated(true);
+    // Refresh profile data
+    actions.getInformationCurrentRestaurant();
   };
 
   useEffect(() => {
-    // actions.getFavorit();
     actions.getInformationCurrentRestaurant();
   }, []);
+
+  useEffect(() => {
+    if (priceUpdated) {
+      setPriceUpdated(false);
+      setPrecio("");
+    }
+  }, [store.profileRestaurante]);
 
   return (
     <>
       {store.auth &&
-      store.auth != "" &&
-      store.auth != undefined &&
-      localStorage.getItem("esLocal") ? (
+      store.auth !== "" &&
+      store.auth !== undefined &&
+      localStorage.getItem("esLocal") === "true" ? (
         <div className="m-4 p-2">
           <div
             className="m-auto mb-4 container"
@@ -127,7 +129,6 @@ export const Restaurante = () => {
                     />
                     <br />
                     <button
-                      onClick={() => window.location.reload()}
                       type="submit"
                       style={{
                         backgroundColor: "rgb(255, 200, 67)",
@@ -160,7 +161,6 @@ export const Restaurante = () => {
                         <span className="border border-dark p-1 m-1">€</span>
                       </div>
                       <button
-                        onClick={() => window.location.reload()}
                         type="submit"
                         style={{
                           backgroundColor: "rgb(255, 200, 67)",

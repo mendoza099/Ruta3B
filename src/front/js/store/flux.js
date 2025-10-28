@@ -21,7 +21,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       restaurantes: [],
       profiles: [],
       likes: [],
-      reserva: [],
+      reservations: [],
       restaurante: [],
       went: [],
       profileRestaurante: [],
@@ -34,8 +34,6 @@ const getState = ({ getStore, getActions, setStore }) => {
       /**AÑADIR A FAVORITOS */
 
       addFavorite: async (id) => {
-        console.log(id);
-
         const response = await fetch(
           process.env.BACKEND_URL + "/api/favlocales/" + id,
           {
@@ -103,75 +101,133 @@ const getState = ({ getStore, getActions, setStore }) => {
       },
 
 
-      /**Agregar reserva */
+      /**NUEVO SISTEMA DE RESERVAS */
 
-      addReserva: async (id,date) => {
-        console.log(id);
-
-        const response = await fetch(
-          process.env.BACKEND_URL + "/api/addReserva/" + id,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({
-              id: id,
-              date:date,
-          }),
-      });
-      if (response.ok) {
-          console.log("Datos guardados");
-      } else {
-          console.log("No se ha podido modificar el dato");
-      }
-
-      },
-      reservarlocal: async (id) => {
-        console.log(id);
-
-        const response = await fetch(
-          process.env.BACKEND_URL + "/api/reservarlocal/" + id,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        if (response.status === 200) {
-          const data = await response.json();
-          console.log(data);
-          setStore({
-            auth: true,
-            
-          });
-          
-        } else if (response.status === 208) {
-          alert("Este restaurante ya lo tienes en reservas");
-        }
-
-        // console.log(data);
-        return true;
-      },
-      getReserva: (id_user, id_local) => {
-        fetch(process.env.BACKEND_URL + "/api/user/reserva", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        })
-          .then((response) => {
-            return response.json();
-          })
-          .then((data) =>
-            setStore({
-              reserva: data,
-            })
+      // Crear reserva
+      createReservation: async (localId, date, time = null, people = 2, notes = null) => {
+        try {
+          const response = await fetch(
+            process.env.BACKEND_URL + "/api/reservations",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify({
+                local_id: localId,
+                date: date,
+                time: time,
+                people: people,
+                notes: notes
+              }),
+            }
           );
+          
+          if (response.status === 201) {
+            const data = await response.json();
+            alert("¡Reserva creada exitosamente!");
+            // Recargar reservas
+            getActions().getReservations();
+            return true;
+          } else if (response.status === 409) {
+            alert("Ya tienes una reserva para esta fecha en este restaurante");
+            return false;
+          } else if (response.status === 400) {
+            const error = await response.json();
+            alert(error.message || "Datos inválidos");
+            return false;
+          } else {
+            alert("Error al crear la reserva");
+            return false;
+          }
+        } catch (err) {
+          alert("Error al crear la reserva. Por favor, intenta de nuevo.");
+          return false;
+        }
+      },
+
+      // Obtener todas las reservas del usuario
+      getReservations: async () => {
+        try {
+          const response = await fetch(
+            process.env.BACKEND_URL + "/api/reservations",
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            setStore({ reservations: data });
+          } else {
+            setStore({ reservations: [] });
+          }
+        } catch (err) {
+          setStore({ reservations: [] });
+        }
+      },
+
+      // Cancelar reserva
+      cancelReservation: async (reservationId) => {
+        try {
+          const response = await fetch(
+            process.env.BACKEND_URL + "/api/reservations/" + reservationId,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          
+          if (response.ok) {
+            alert("Reserva cancelada exitosamente");
+            // Recargar reservas
+            getActions().getReservations();
+            return true;
+          } else {
+            alert("Error al cancelar la reserva");
+            return false;
+          }
+        } catch (err) {
+          alert("Error al cancelar la reserva");
+          return false;
+        }
+      },
+
+      // Actualizar reserva
+      updateReservation: async (reservationId, updates) => {
+        try {
+          const response = await fetch(
+            process.env.BACKEND_URL + "/api/reservations/" + reservationId,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify(updates),
+            }
+          );
+          
+          if (response.ok) {
+            alert("Reserva actualizada exitosamente");
+            getActions().getReservations();
+            return true;
+          } else {
+            alert("Error al actualizar la reserva");
+            return false;
+          }
+        } catch (err) {
+          alert("Error al actualizar la reserva");
+          return false;
+        }
       },
       addWent: (nombre) => {
         //Creamos la funcion para obtener el nombre con el Onclick
@@ -196,30 +252,32 @@ const getState = ({ getStore, getActions, setStore }) => {
               "Content-Type": "application/json",
             },
           });
-          console.log(response.status);
           if (response.status === 200) {
             setStore({
               auth: true,
             });
             const data = await response.json();
             localStorage.setItem("token", data.access_token);
-            console.log(data.type);
+            
             if (data.type) {
-              localStorage.setItem("esLocal", data.type);
+              // Es un local/restaurante
+              localStorage.setItem("esLocal", "true");
+              localStorage.removeItem("esUsuario");
               return true;
             } else {
-              localStorage.setItem("esUsuario", false);
+              // Es un usuario normal
+              localStorage.setItem("esUsuario", "true");
+              localStorage.removeItem("esLocal");
               return false;
             }
           }
         } catch (err) {
-          console.log(err);
+          alert("Error al iniciar sesión. Por favor, intenta de nuevo.");
         }
       },
       syncTokenFromLocalStorage: () => {
         const auth = localStorage.getItem("token");
-        console.log("app loaded, synching the localstorage token");
-        if (auth && auth != "" && auth != undefined)
+        if (auth && auth !== "" && auth !== undefined)
           setStore({
             auth: auth,
           });
@@ -277,19 +335,6 @@ const getState = ({ getStore, getActions, setStore }) => {
           );
       },
 
-      getRestaurantes: async () => {
-        const store = getStore();
-
-        // fetching data from the backend
-        const resp = await fetch(process.env.BACKEND_URL + "/api/restaurantes")
-          .then((resp) => resp.json())
-          .then((data) =>
-            setStore({
-              restaurantes: data,
-            })
-          );
-      },
-
       registroUsuario: async (nombre, apellido, email, password) => {
         const response = await fetch(process.env.BACKEND_URL + "/api/user", {
           method: "POST",
@@ -303,13 +348,14 @@ const getState = ({ getStore, getActions, setStore }) => {
             "Content-Type": "application/json",
           },
         });
-        console.log(response.status);
-        if (response.status == 201) {
+        if (response.status === 201) {
           const data = await response.json();
-         
           return true;
-        } else {
+        } else if (response.status === 409) {
           alert("Ya hay un usuario registrado con ese email");
+          return false;
+        } else {
+          alert("Error al registrar usuario. Por favor, intenta de nuevo.");
           return false;
         }
         
