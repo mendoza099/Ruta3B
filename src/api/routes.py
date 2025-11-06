@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Locales, Direccion, Reservation
+from api.models import db, User, Locales, Direccion, Reservation, Review
 from api.utils import generate_sitemap, APIException
 import json
 import datetime
@@ -12,6 +12,10 @@ from datetime import datetime as dt
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
+
+# Geopy para geocodificación
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
 
 api = Blueprint('api', __name__)
@@ -44,37 +48,50 @@ def login():
     try:
         data = request.get_json()
         if not data:
-            return jsonify({'message': 'No data provided'}), 400
+            return jsonify({'message': 'No se recibieron datos'}), 400
         
-        email = data.get('email', None)
-        password = data.get('password', None)
-        type = data.get('type', None)
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
         
         if not email or not password:
-            return jsonify({'message': 'Email and password are required'}), 400
+            return jsonify({'message': 'Email y contraseña son requeridos'}), 400
         
-        user = None
-        if type:
-            # restaurante
-            user = Locales.query.filter_by(email=email).one_or_none()
-            if not user:
-                return jsonify({'message': 'Invalid credentials'}), 401
-            if not user.check_password(password):
-                return jsonify({"message": "Invalid credentials"}), 401
-        else:
-            # usuario
-            user = User.query.filter_by(email=email).one_or_none()
-            if not user:
-                return jsonify({'message': 'Invalid credentials'}), 401
-            if not user.check_password(password):
-                return jsonify({"message": "Invalid credentials"}), 401
+        # Primero intentar buscar en la tabla de restaurantes
+        restaurante = Locales.query.filter_by(email=email).one_or_none()
+        if restaurante:
+            if not restaurante.check_password(password):
+                return jsonify({"message": "Email o contraseña incorrectos"}), 401
+            # Es un restaurante
+            expired = datetime.timedelta(minutes=240)
+            access_token = create_access_token(identity=email, expires_delta=expired)
+            return jsonify({
+                "access_token": access_token, 
+                "type": True,
+                "user_type": "restaurant",
+                "name": restaurante.nombre
+            }), 200
         
-        expired = datetime.timedelta(minutes=240)
-        access_token = create_access_token(identity=email, expires_delta=expired)
-        return jsonify({"access_token": access_token, "type": type}), 200
+        # Si no es restaurante, buscar en la tabla de usuarios
+        usuario = User.query.filter_by(email=email).one_or_none()
+        if usuario:
+            if not usuario.check_password(password):
+                return jsonify({"message": "Email o contraseña incorrectos"}), 401
+            # Es un usuario normal
+            expired = datetime.timedelta(minutes=240)
+            access_token = create_access_token(identity=email, expires_delta=expired)
+            return jsonify({
+                "access_token": access_token, 
+                "type": False,
+                "user_type": "user",
+                "name": usuario.nombre
+            }), 200
+        
+        # Si no se encuentra en ninguna tabla
+        return jsonify({'message': 'Email o contraseña incorrectos'}), 401
     
     except Exception as e:
-        return jsonify({'message': 'Server error'}), 500
+        print(f"Error en login: {str(e)}")
+        return jsonify({'message': 'Error del servidor. Por favor, intenta de nuevo.'}), 500
 
 # Protect a route with jwt_required, which will kick out requests
 # without a valid JWT present.
@@ -158,11 +175,33 @@ def create_new_user_locales():
         if existing_local:
             return jsonify({'message': 'Email already registered'}), 409
         
+        # Geocodificar la dirección si se proporciona
+        latitud = None
+        longitud = None
+        if data.get('direccion') and data.get('ciudad'):
+            try:
+                geolocator = Nominatim(user_agent="ruta3b_app")
+                direccion_completa = f"{data['direccion']}, {data['ciudad']}, {data.get('codigo_postal', '')}, España"
+                location = geolocator.geocode(direccion_completa, timeout=10)
+                if location:
+                    latitud = location.latitude
+                    longitud = location.longitude
+                    print(f"Geocodificación exitosa: {latitud}, {longitud}")
+                else:
+                    print("No se pudo geocodificar la dirección")
+            except (GeocoderTimedOut, GeocoderServiceError) as e:
+                print(f"Error en geocodificación: {str(e)}")
+        
         new_user_local = Locales(
             nombre=data["nombre"],
             email=data["email"],
             tipo_local=data["tipo_local"],
-            descripcion=data["descripcion"]
+            descripcion=data["descripcion"],
+            direccion=data.get("direccion"),
+            ciudad=data.get("ciudad"),
+            codigo_postal=data.get("codigo_postal"),
+            latitud=latitud,
+            longitud=longitud
         )
         new_user_local.set_password(data["password"])
         
@@ -174,6 +213,7 @@ def create_new_user_locales():
     
     except Exception as e:
         db.session.rollback()
+        print(f"Error en registro: {str(e)}")
         return jsonify({'message': 'Server error'}), 500 
 
 
@@ -437,115 +477,138 @@ def create_reservation():
         return jsonify({'message': 'Server error', 'error': str(e)}), 500
 
 
-@api.route('/reservations', methods=['GET'])
-@jwt_required()
-def get_user_reservations():
-    """Obtener todas las reservas del usuario"""
+# ============================================
+# ENDPOINTS DE COMENTARIOS/RESEÑAS
+# ============================================
+
+@api.route('/reviews/<int:local_id>', methods=['GET'])
+def get_restaurant_reviews(local_id):
+    """Obtener todas las reseñas de un restaurante"""
     try:
-        email = get_jwt_identity()
-        user = User.query.filter_by(email=email).first()
-        
-        if not user:
-            return jsonify({'message': 'User not found'}), 404
-        
-        # Obtener reservas ordenadas por fecha (más recientes primero)
-        reservations = Reservation.query.filter_by(
-            user_id=user.id
-        ).order_by(Reservation.date.desc()).all()
-        
-        return jsonify([r.serialize() for r in reservations]), 200
-    
+        reviews = Review.query.filter_by(local_id=local_id).order_by(Review.created_at.desc()).all()
+        return jsonify([review.serialize() for review in reviews]), 200
     except Exception as e:
-        return jsonify({'message': 'Server error', 'error': str(e)}), 500
+        print(f"Error al obtener reseñas: {str(e)}")
+        return jsonify({'message': 'Error al obtener reseñas'}), 500
 
 
-@api.route('/reservations/<int:reservation_id>', methods=['DELETE'])
+@api.route('/reviews', methods=['POST'])
 @jwt_required()
-def cancel_reservation(reservation_id):
-    """Cancelar una reserva"""
+def create_review():
+    """Crear una nueva reseña"""
     try:
-        email = get_jwt_identity()
-        user = User.query.filter_by(email=email).first()
+        current_user_email = get_jwt_identity()
+        user = User.query.filter_by(email=current_user_email).first()
         
         if not user:
-            return jsonify({'message': 'User not found'}), 404
-        
-        reservation = Reservation.query.get(reservation_id)
-        
-        if not reservation:
-            return jsonify({'message': 'Reservation not found'}), 404
-        
-        # Verificar que la reserva pertenece al usuario
-        if reservation.user_id != user.id:
-            return jsonify({'message': 'Unauthorized'}), 403
-        
-        # Cambiar estado a cancelada (no eliminar)
-        reservation.status = 'cancelled'
-        db.session.commit()
-        
-        return jsonify({'message': 'Reservation cancelled successfully'}), 200
-    
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'message': 'Server error', 'error': str(e)}), 500
-
-
-@api.route('/reservations/<int:reservation_id>', methods=['PUT'])
-@jwt_required()
-def update_reservation(reservation_id):
-    """Actualizar una reserva"""
-    try:
-        email = get_jwt_identity()
-        user = User.query.filter_by(email=email).first()
-        
-        if not user:
-            return jsonify({'message': 'User not found'}), 404
-        
-        reservation = Reservation.query.get(reservation_id)
-        
-        if not reservation:
-            return jsonify({'message': 'Reservation not found'}), 404
-        
-        # Verificar que la reserva pertenece al usuario
-        if reservation.user_id != user.id:
-            return jsonify({'message': 'Unauthorized'}), 403
+            return jsonify({'message': 'Usuario no encontrado'}), 404
         
         data = request.get_json()
+        local_id = data.get('local_id')
+        rating = data.get('rating')
+        comment = data.get('comment', '').strip()
         
-        # Actualizar campos si se proporcionan
-        if 'date' in data:
-            try:
-                new_date = dt.strptime(data['date'], '%Y-%m-%d').date()
-                if new_date < dt.now().date():
-                    return jsonify({'message': 'Date must be in the future'}), 400
-                reservation.date = new_date
-            except ValueError:
-                return jsonify({'message': 'Invalid date format'}), 400
+        # Validaciones
+        if not local_id or not rating:
+            return jsonify({'message': 'Faltan datos requeridos'}), 400
         
-        if 'time' in data and data['time']:
-            try:
-                reservation.time = dt.strptime(data['time'], '%H:%M').time()
-            except ValueError:
-                return jsonify({'message': 'Invalid time format'}), 400
+        if not isinstance(rating, int) or rating < 1 or rating > 5:
+            return jsonify({'message': 'La calificación debe ser entre 1 y 5'}), 400
         
-        if 'people' in data:
-            reservation.people = data['people']
+        if not comment:
+            return jsonify({'message': 'El comentario no puede estar vacío'}), 400
         
-        if 'notes' in data:
-            reservation.notes = data['notes']
+        if len(comment) < 10:
+            return jsonify({'message': 'El comentario debe tener al menos 10 caracteres'}), 400
         
+        # Verificar que el restaurante existe
+        local = Locales.query.get(local_id)
+        if not local:
+            return jsonify({'message': 'Restaurante no encontrado'}), 404
+        
+        # Verificar si el usuario ya dejó una reseña en este restaurante
+        existing_review = Review.query.filter_by(user_id=user.id, local_id=local_id).first()
+        if existing_review:
+            return jsonify({'message': 'Ya has dejado una reseña en este restaurante'}), 400
+        
+        # Crear la reseña
+        new_review = Review(
+            user_id=user.id,
+            local_id=local_id,
+            rating=rating,
+            comment=comment
+        )
+        
+        db.session.add(new_review)
         db.session.commit()
         
-        return jsonify(reservation.serialize()), 200
-    
+        return jsonify({
+            'message': 'Reseña creada exitosamente',
+            'review': new_review.serialize()
+        }), 201
+        
     except Exception as e:
         db.session.rollback()
-        return jsonify({'message': 'Server error', 'error': str(e)}), 500
+        print(f"Error al crear reseña: {str(e)}")
+        return jsonify({'message': 'Error al crear la reseña'}), 500
 
 
+@api.route('/reviews/<int:review_id>', methods=['DELETE'])
+@jwt_required()
+def delete_review(review_id):
+    """Eliminar una reseña (solo el autor puede eliminarla)"""
+    try:
+        current_user_email = get_jwt_identity()
+        user = User.query.filter_by(email=current_user_email).first()
+        
+        if not user:
+            return jsonify({'message': 'Usuario no encontrado'}), 404
+        
+        review = Review.query.get(review_id)
+        if not review:
+            return jsonify({'message': 'Reseña no encontrada'}), 404
+        
+        # Verificar que el usuario es el autor de la reseña
+        if review.user_id != user.id:
+            return jsonify({'message': 'No tienes permiso para eliminar esta reseña'}), 403
+        
+        db.session.delete(review)
+        db.session.commit()
+        
+        return jsonify({'message': 'Reseña eliminada exitosamente'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al eliminar reseña: {str(e)}")
+        return jsonify({'message': 'Error al eliminar la reseña'}), 500
 
 
-
-
-
-
+@api.route('/reviews/stats/<int:local_id>', methods=['GET'])
+def get_review_stats(local_id):
+    """Obtener estadísticas de reseñas de un restaurante"""
+    try:
+        reviews = Review.query.filter_by(local_id=local_id).all()
+        
+        if not reviews:
+            return jsonify({
+                'total': 0,
+                'average': 0,
+                'ratings': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+            }), 200
+        
+        total = len(reviews)
+        average = sum(r.rating for r in reviews) / total
+        ratings = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        
+        for review in reviews:
+            ratings[review.rating] += 1
+        
+        return jsonify({
+            'total': total,
+            'average': round(average, 1),
+            'ratings': ratings
+        }), 200
+        
+    except Exception as e:
+        print(f"Error al obtener estadísticas: {str(e)}")
+        return jsonify({'message': 'Error al obtener estadísticas'}), 500

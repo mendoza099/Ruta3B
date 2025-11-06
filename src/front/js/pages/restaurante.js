@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Context } from "../store/appContext";
 import "../../styles/perfilRestaurante.css";
 import { CargaDeFoto } from "../component/cargaDeFoto";
+import RestaurantMap from "../component/restaurantMap";
 
 export const Restaurante = () => {
   const { store, actions } = useContext(Context);
@@ -174,6 +175,25 @@ export const Restaurante = () => {
                   </div>
                 )}
               </form>
+            </div>
+          </div>
+
+          {/* Mapa de ubicación */}
+          <div className="container my-4">
+            <div
+              className="p-4"
+              style={{
+                backgroundColor: "rgb(247, 230, 173)",
+                borderRadius: "15px",
+              }}
+            >
+              <RestaurantMap
+                latitud={store.profileRestaurante?.latitud}
+                longitud={store.profileRestaurante?.longitud}
+                nombre={store.profileRestaurante?.nombre}
+                direccion={store.profileRestaurante?.direccion}
+                ciudad={store.profileRestaurante?.ciudad}
+              />
             </div>
           </div>
 

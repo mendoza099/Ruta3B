@@ -59,6 +59,13 @@ class Locales(db.Model):
     descripcion = db.Column(db.String(250), nullable=False)
     precio = db.Column(db.Integer, nullable=True)
     foto = db.Column(db.String(500), nullable=True)
+    
+    # Campos de dirección y ubicación
+    direccion = db.Column(db.String(300), nullable=True)
+    ciudad = db.Column(db.String(100), nullable=True)
+    codigo_postal = db.Column(db.String(20), nullable=True)
+    latitud = db.Column(db.Float, nullable=True)
+    longitud = db.Column(db.Float, nullable=True)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -77,7 +84,12 @@ class Locales(db.Model):
             "tipo_local": self.tipo_local,
             "descripcion": self.descripcion,
             "precio": self.precio,
-            "foto": self.foto
+            "foto": self.foto,
+            "direccion": self.direccion,
+            "ciudad": self.ciudad,
+            "codigo_postal": self.codigo_postal,
+            "latitud": self.latitud,
+            "longitud": self.longitud
         }
 
 # TABLA DE DIRECCIÓN
@@ -134,5 +146,35 @@ class Reservation(db.Model):
             "people": self.people,
             "status": self.status,
             "notes": self.notes,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+
+# TABLA DE COMENTARIOS/RESEÑAS
+class Review(db.Model):
+    __tablename__ = 'review'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    local_id = db.Column(db.Integer, db.ForeignKey('locales.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # 1-5 estrellas
+    comment = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relaciones
+    user = db.relationship('User', backref=db.backref('reviews', lazy=True))
+    local = db.relationship('Locales', backref=db.backref('reviews', lazy=True))
+    
+    def __repr__(self):
+        return f'<Review {self.id} - User {self.user_id} - Local {self.local_id}>'
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "user_name": f"{self.user.nombre} {self.user.apellido}" if self.user else None,
+            "local_id": self.local_id,
+            "local_name": self.local.nombre if self.local else None,
+            "rating": self.rating,
+            "comment": self.comment,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }

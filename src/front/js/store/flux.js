@@ -239,40 +239,78 @@ const getState = ({ getStore, getActions, setStore }) => {
       
 
       /****************************************************** */
-      login: async (email, password, type) => {
+      login: async (email, password) => {
         try {
-          const response = await fetch(process.env.BACKEND_URL + "/api/login", {
+          // Validar que los campos no estén vacíos
+          if (!email || !password) {
+            return {
+              success: false,
+              message: "Por favor, completa todos los campos"
+            };
+          }
+
+          const backendUrl = process.env.BACKEND_URL || "http://localhost:3001";
+          console.log("🔍 Intentando login en:", backendUrl + "/api/login");
+
+          const response = await fetch(backendUrl + "/api/login", {
             method: "POST",
             body: JSON.stringify({
               email: email,
               password: password,
-              type: type,
             }),
             headers: {
               "Content-Type": "application/json",
             },
           });
+          
+          const data = await response.json();
+          
           if (response.status === 200) {
+            // Login exitoso
             setStore({
               auth: true,
             });
-            const data = await response.json();
+            
             localStorage.setItem("token", data.access_token);
             
-            if (data.type) {
-              // Es un local/restaurante
+            if (data.type === true) {
+              // Es un restaurante
               localStorage.setItem("esLocal", "true");
               localStorage.removeItem("esUsuario");
-              return true;
+              return {
+                success: true,
+                isRestaurant: true,
+                message: "¡Bienvenido de nuevo!"
+              };
             } else {
               // Es un usuario normal
               localStorage.setItem("esUsuario", "true");
               localStorage.removeItem("esLocal");
-              return false;
+              return {
+                success: true,
+                isRestaurant: false,
+                message: "¡Bienvenido de nuevo!"
+              };
             }
+          } else if (response.status === 401) {
+            // Credenciales incorrectas
+            return {
+              success: false,
+              message: "Email o contraseña incorrectos"
+            };
+          } else {
+            // Otro error
+            return {
+              success: false,
+              message: data.message || "Error al iniciar sesión"
+            };
           }
         } catch (err) {
-          alert("Error al iniciar sesión. Por favor, intenta de nuevo.");
+          console.error("Error en login:", err);
+          return {
+            success: false,
+            message: "Error de conexión. Por favor, intenta de nuevo."
+          };
         }
       },
       syncTokenFromLocalStorage: () => {
@@ -387,7 +425,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       
 
       // REGISTRO DE USUARIO
-      RegistroLocales: (nombre, email, password, tipo_local, descripcion) => {
+      RegistroLocales: (nombre, email, password, tipo_local, descripcion, direccion, ciudad, codigo_postal) => {
         fetch(process.env.BACKEND_URL + "/api/locales", {
           method: "POST",
           body: JSON.stringify({
@@ -396,6 +434,9 @@ const getState = ({ getStore, getActions, setStore }) => {
             password: password,
             tipo_local: tipo_local,
             descripcion: descripcion,
+            direccion: direccion,
+            ciudad: ciudad,
+            codigo_postal: codigo_postal,
           }),
           headers: {
             "Content-Type": "application/json",

@@ -11,6 +11,9 @@ const RegistroDeLocales = () => {
   const [newDescripcion, setNewDescripcion] = useState("");
   const [newPago, setNewPago] = useState("");
   const [typeLocal, setTypeLocal] = useState("");
+  const [direccion, setDireccion] = useState("");
+  const [ciudad, setCiudad] = useState("");
+  const [codigoPostal, setCodigoPostal] = useState("");
   const navigate = useNavigate();
   const { store, actions } = useContext(Context);
 
@@ -40,13 +43,15 @@ const RegistroDeLocales = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // if (email)
     actions.RegistroLocales(
       newNameLocal,
       newEmail,
       newPassword,
       typeLocal,
-      newDescripcion
+      newDescripcion,
+      direccion,
+      ciudad,
+      codigoPostal
     );
     navigate("/login");
     {
@@ -192,6 +197,48 @@ const RegistroDeLocales = () => {
               required
             />
           </div>
+
+          {/* Campos de dirección */}
+          <div className="mb-3">
+            <h5 className="mb-3">Ubicación del Local</h5>
+            <label className="p-1" htmlFor="">
+              Dirección completa
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Calle, número, piso..."
+              onChange={(e) => setDireccion(e.target.value)}
+              required
+            />
+          </div>
+          <div className="row mb-3">
+            <div className="col-md-8">
+              <label className="p-1" htmlFor="">
+                Ciudad
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Madrid, Barcelona..."
+                onChange={(e) => setCiudad(e.target.value)}
+                required
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="p-1" htmlFor="">
+                Código Postal
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="28001"
+                onChange={(e) => setCodigoPostal(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
           <div className="text-center">
             {showErrorMessage && isCPasswordDirty == true ? (
               <button

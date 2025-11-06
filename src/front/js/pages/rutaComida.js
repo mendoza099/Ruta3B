@@ -2,7 +2,8 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Context } from "../store/appContext";
 import "../../styles/perfilRestaurante.css";
-import { ComentarioFacebook } from "../component/comentarioFacebook";
+import { Reviews } from "../component/reviews";
+import RestaurantMap from "../component/restaurantMap";
 
 export const RutaComida = ({ nombre, descripcion, id, tipo_local }) => {
   const { store, actions } = useContext(Context);
@@ -149,8 +150,27 @@ export const RutaComida = ({ nombre, descripcion, id, tipo_local }) => {
         ""
       )}
 
-      <div className="inferior d-flex m-auto mt-5">
-        <ComentarioFacebook theid={theid} />
+      {/* Mapa de ubicación */}
+      <div className="container my-5">
+        <div
+          className="p-4"
+          style={{
+            backgroundColor: "rgb(247, 230, 173)",
+            borderRadius: "15px",
+          }}
+        >
+          <RestaurantMap
+            latitud={restaurant?.latitud}
+            longitud={restaurant?.longitud}
+            nombre={restaurant?.nombre}
+            direccion={restaurant?.direccion}
+            ciudad={restaurant?.ciudad}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <Reviews localId={parseInt(theid)} />
       </div>
       <div className="w-25 m-auto text-center">
         <Link className="" to="/restaurantes">
