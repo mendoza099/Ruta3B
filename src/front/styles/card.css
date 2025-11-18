@@ -1,7 +1,315 @@
+/* ============================================
+   MINIMAL CARD DESIGN WITH ADVANCED ANIMATIONS
+   ============================================ */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.card-minimal {
+    display: flex;
+    background: #FFFFFF;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    margin: 32px auto;
+    max-width: 1100px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    position: relative;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.card-minimal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: left 0.5s;
+}
+
+.card-minimal:hover::before {
+    left: 100%;
+}
+
+.card-minimal:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    transform: translateY(-8px);
+    border-color: rgba(52, 152, 219, 0.2);
+}
+
+.card-minimal-reverse {
+    flex-direction: row-reverse;
+}
+
+.card-minimal-image {
+    flex: 0 0 48%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    height: 400px;
+    min-height: 400px;
+    max-height: 400px;
+}
+
+.card-minimal-image::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0, 0, 0, 0.1) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.card-minimal:hover .card-minimal-image::after {
+    opacity: 1;
+}
+
+.card-minimal-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: brightness(1);
+}
+
+.card-minimal-content {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #FFFFFF;
+    position: relative;
+}
+
+.card-minimal-header {
+    margin-bottom: 20px;
+}
+
+.card-minimal-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 16px 0;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    transition: color 0.3s ease;
+}
+
+.card-minimal:hover .card-minimal-title {
+    color: #3498DB;
+}
+
+.card-minimal-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #FFFFFF;
+    border-radius: 25px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.card-minimal:hover .card-minimal-badge {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.card-minimal-description {
+    color: #666;
+    font-size: 16px;
+    line-height: 1.8;
+    margin: 0 0 28px 0;
+    font-weight: 400;
+}
+
+.card-minimal-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* ============================================
+   MODERN BUTTON STYLES
+   ============================================ */
+
+.btn-minimal {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-minimal::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-minimal:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-minimal-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #FFFFFF;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-minimal-primary:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    color: #FFFFFF;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+.btn-minimal-primary:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-minimal-icon {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    background: #FFFFFF;
+    border: 2px solid #E8E8E8;
+    color: #666;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-minimal-icon:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+    color: #FFFFFF;
+    transform: translateY(-3px) rotate(10deg);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-minimal-icon:active {
+    transform: translateY(-1px) rotate(5deg);
+}
+
+.btn-minimal-danger:hover {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-color: transparent;
+    color: #FFFFFF;
+    box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+}
+
+.btn-minimal-icon svg {
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.btn-minimal-icon:hover svg {
+    transform: scale(1.1);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+    .card-minimal,
+    .card-minimal-reverse {
+        flex-direction: column;
+        margin: 20px 16px;
+    }
+    
+    .card-minimal-image {
+        flex: 0 0 280px;
+    }
+    
+    .card-minimal-content {
+        padding: 28px;
+    }
+    
+    .card-minimal-title {
+        font-size: 26px;
+    }
+    
+    .card-minimal-description {
+        font-size: 15px;
+    }
+    
+    .card-minimal-actions {
+        flex-wrap: wrap;
+    }
+    
+    .btn-minimal-primary {
+        flex: 1 1 100%;
+    }
+}
+
+/* Legacy support */
 .myborder {
-    border-radius: 15px;
-    border: 1px solid #000000;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
     margin: 10px;
     padding: 20px;
-    box-shadow: inset 0px 0px 30px -15px rgba(255, 200, 0, 1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
