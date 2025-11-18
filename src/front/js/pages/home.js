@@ -1,4 +1,4 @@
-import React, { StrictMode, useContext } from "react";
+import React, { StrictMode, useContext, useEffect } from "react";
 import { Context } from "../store/appContext";
 import "../../styles/home.css";
 import { CardHome } from "./cardHome.jsx";
@@ -7,30 +7,60 @@ import { CardHome2 } from "./cardHome2.jsx";
 export const Home = () => {
   const { store } = useContext(Context);
 
-  const id = store.restaurantes.map((item, index) => (
-    <CardHome
-      key={item.id}
-      id={item.id}
-      tipo_local={item.tipo_local}
-      descripcion={item.descripcion}
-      nombre={item.nombre}
-      foto={item.foto}
-    />
-  ));
-  const id2 = store.restaurantes.map((item, index) => (
-    <CardHome2
-      key={item.id}
-      id={item.id}
-      tipo_local={item.tipo_local}
-      descripcion={item.descripcion}
-      nombre={item.nombre}
-      foto={item.foto}
-    />
-  ));
+  // Seleccionar 4 restaurantes aleatorios
+  const getRandomRestaurants = () => {
+    const shuffled = [...store.restaurantes].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 4);
+  };
 
-  let randm = id[Math.floor(Math.random() * id.length)];
+  const randomRestaurants = getRandomRestaurants();
 
-  let randm2 = id2[Math.floor(Math.random() * id2.length)];
+  // Renderizar 4 restaurantes en grid 2x2
+  const restaurantCards = randomRestaurants.map((item, index) => {
+    // Alternar entre CardHome y CardHome2 según el índice
+    const CardComponent = index % 2 === 0 ? CardHome : CardHome2;
+    return (
+      <CardComponent
+        key={item.id}
+        id={item.id}
+        tipo_local={item.tipo_local}
+        descripcion={item.descripcion}
+        nombre={item.nombre}
+        foto={item.foto}
+      />
+    );
+  });
+
+  // Intersection Observer para animaciones al hacer scroll
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+
+    const observerCallback = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('card-visible');
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    // Observar todas las cards del home
+    const cards = document.querySelectorAll('.home-restaurants-grid .card-minimal');
+    cards.forEach((card) => {
+      observer.observe(card);
+    });
+
+    return () => {
+      cards.forEach((card) => {
+        observer.unobserve(card);
+      });
+    };
+  }, [randomRestaurants]);
 
   return (
     <>
@@ -57,114 +87,8 @@ export const Home = () => {
         </div>
       </div>
       <hr />
-      <div className="container-fluid w-75 p-2">
-        <div className="p-3">{randm}</div>
-        <div className="p-3">{randm2}</div>
-      </div>
-
-      <div className="d-flex justify-content-center p-5">
-        <div
-          id="carouselExampleIndicators"
-          className="carousel slide w-50"
-          data-bs-ride="true"
-        >
-          <div className="carousel-indicators">
-            <button
-              type="button"
-              data-bs-target="#carouselExampleIndicators"
-              data-bs-slide-to="0"
-              className="active"
-              aria-current="true"
-              aria-label="Slide 1"
-            ></button>
-            <button
-              type="button"
-              data-bs-target="#carouselExampleIndicators"
-              data-bs-slide-to="1"
-              aria-label="Slide 2"
-            ></button>
-            <button
-              type="button"
-              data-bs-target="#carouselExampleIndicators"
-              data-bs-slide-to="2"
-              aria-label="Slide 3"
-            ></button>
-          </div>
-          <div className="carousel-inner">
-            <div className="carousel-item active">
-              <img
-                src="https://media-cdn.tripadvisor.com/media/photo-s/1c/1b/7b/13/area-interna.jpg"
-                className="d-block w-100 rounded"
-                alt="..."
-              />
-              <div className="carousel-caption d-none d-md-block">
-                <div className="bg-dark p-2 bg-opacity-50 rounded">
-                  <h5>Pez Tortilla</h5>
-                  <p>
-                    Bar de tapas especializado en tortillas actuales y croquetas
-                    gourmet que ofrece más de 70 cervezas artesanas.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="carousel-item">
-              <img
-                src="https://www.laguiago.com/wp-content/uploads/2020/12/RESTAURANTE-ALMA-MATER-7-scaled-1.jpg"
-                className="d-block w-100 rounded"
-                alt="..."
-              />
-              <div className="carousel-caption d-none d-md-block">
-                <div className="bg-dark p-2 bg-opacity-50 rounded">
-                  <h5>Taberna gordinflón</h5>
-                  <p>
-                    Platos tradicionales de nuestro restaurante situado en
-                    Bétera "Restuarante El Gordo y el Flaco".
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="carousel-item">
-              <img
-                src="https://www.hoteles-silken.com/content/imgsxml/galerias/panel_sliderheaderhotel/1/t-restaurante-etxaniz-015971.jpg"
-                className="d-block w-100 rounded"
-                alt="..."
-              />
-              <div className="carousel-caption d-none d-md-block">
-                <div className="bg-dark p-2 bg-opacity-50 rounded">
-                  <h5>Asador El Pastoret</h5>
-                  <p>
-                    Asador con terraza, que ofrece tapas, carnes a la brasa y
-                    sus famosos y enormes bocadillos y sándwiches.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <button
-            className="carousel-control-prev"
-            type="button"
-            data-bs-target="#carouselExampleIndicators"
-            data-bs-slide="prev"
-          >
-            <span
-              className="carousel-control-prev-icon"
-              aria-hidden="true"
-            ></span>
-            <span className="visually-hidden">Previous</span>
-          </button>
-          <button
-            className="carousel-control-next"
-            type="button"
-            data-bs-target="#carouselExampleIndicators"
-            data-bs-slide="next"
-          >
-            <span
-              className="carousel-control-next-icon"
-              aria-hidden="true"
-            ></span>
-            <span className="visually-hidden">Next</span>
-          </button>
-        </div>
+      <div className="home-restaurants-grid">
+        {restaurantCards}
       </div>
     </>
   );
