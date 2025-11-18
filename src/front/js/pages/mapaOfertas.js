@@ -2,23 +2,55 @@ import React, { useState, useEffect, useRef } from "react";
 import "../../styles/mapa.css";
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet.heat';
+
+// Importar leaflet.heat de forma segura
+let HeatLayer;
+try {
+  require('leaflet.heat');
+  HeatLayer = L.heatLayer;
+} catch (error) {
+  console.error("Error loading leaflet.heat:", error);
+}
+
+// Configurar iconos de Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
 
 export const MapaOfertas = () => {
   const [offers, setOffers] = useState([]);
   const [selectedCity, setSelectedCity] = useState("todas");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const heatLayerRef = useRef(null);
+  const markersRef = useRef([]);
 
   useEffect(() => {
     fetchOffers();
+    return () => {
+      // Cleanup al desmontar
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
   }, []);
 
   useEffect(() => {
-    if (offers.length > 0 && !mapInstanceRef.current) {
-      initializeMap();
+    // Esperar a que el DOM esté listo antes de inicializar el mapa
+    if (offers.length > 0 && !mapInstanceRef.current && mapRef.current) {
+      // Usar setTimeout para asegurar que el contenedor está en el DOM
+      const timer = setTimeout(() => {
+        if (mapRef.current) {
+          initializeMap();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     } else if (mapInstanceRef.current) {
       updateHeatmap();
     }
@@ -29,68 +61,104 @@ export const MapaOfertas = () => {
       const response = await fetch(process.env.BACKEND_URL + "/api/offers");
       if (response.ok) {
         const data = await response.json();
+        console.log("Offers loaded:", data.length);
         setOffers(data);
+        setError(null);
+      } else {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
       console.error("Error fetching offers:", error);
+      setError("No se pudieron cargar las ofertas. Por favor, intenta de nuevo.");
     } finally {
       setLoading(false);
     }
   };
 
   const initializeMap = () => {
-    // Centro de España
-    const map = L.map(mapRef.current).setView([40.4168, -3.7038], 6);
+    try {
+      if (!mapRef.current) {
+        console.error("Map container not found");
+        return;
+      }
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 18,
-    }).addTo(map);
+      // Centro de España
+      const map = L.map(mapRef.current).setView([40.4168, -3.7038], 6);
 
-    mapInstanceRef.current = map;
-    updateHeatmap();
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18,
+      }).addTo(map);
+
+      mapInstanceRef.current = map;
+      console.log("Map initialized successfully");
+      updateHeatmap();
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      setError("Error al inicializar el mapa. Por favor, recarga la página.");
+    }
   };
 
   const updateHeatmap = () => {
     if (!mapInstanceRef.current) return;
 
-    // Remover capa anterior si existe
-    if (heatLayerRef.current) {
-      mapInstanceRef.current.removeLayer(heatLayerRef.current);
-    }
+    try {
+      // Remover capa anterior si existe
+      if (heatLayerRef.current) {
+        mapInstanceRef.current.removeLayer(heatLayerRef.current);
+        heatLayerRef.current = null;
+      }
 
-    // Filtrar ofertas por ciudad
-    let filteredOffers = offers;
-    if (selectedCity !== "todas") {
-      filteredOffers = offers.filter(offer => offer.local_city === selectedCity);
-    }
-
-    // Preparar datos para el mapa de calor
-    const heatData = filteredOffers
-      .filter(offer => offer.local_latitude && offer.local_longitude)
-      .map(offer => {
-        // Intensidad basada en el descuento
-        const intensity = offer.discount_percentage / 100;
-        return [offer.local_latitude, offer.local_longitude, intensity];
+      // Remover marcadores anteriores
+      markersRef.current.forEach(marker => {
+        mapInstanceRef.current.removeLayer(marker);
       });
+      markersRef.current = [];
 
-    if (heatData.length > 0) {
-      // Crear capa de calor
-      const heatLayer = L.heatLayer(heatData, {
-        radius: 25,
-        blur: 35,
-        maxZoom: 17,
-        max: 1.0,
-        gradient: {
-          0.0: 'blue',
-          0.3: 'cyan',
-          0.5: 'lime',
-          0.7: 'yellow',
-          1.0: 'red'
+      // Filtrar ofertas por ciudad
+      let filteredOffers = offers;
+      if (selectedCity !== "todas") {
+        filteredOffers = offers.filter(offer => offer.local_city === selectedCity);
+      }
+
+      console.log(`Filtered offers: ${filteredOffers.length}`);
+
+      // Preparar datos para el mapa de calor
+      const heatData = filteredOffers
+        .filter(offer => offer.local_latitude && offer.local_longitude)
+        .map(offer => {
+          // Intensidad basada en el descuento
+          const intensity = offer.discount_percentage / 100;
+          return [offer.local_latitude, offer.local_longitude, intensity];
+        });
+
+      console.log(`Heat data points: ${heatData.length}`);
+
+      if (heatData.length > 0 && HeatLayer) {
+        // Crear capa de calor solo si leaflet.heat está disponible
+        const heatLayer = HeatLayer(heatData, {
+          radius: 25,
+          blur: 35,
+          maxZoom: 17,
+          max: 1.0,
+          gradient: {
+            0.0: 'blue',
+            0.3: 'cyan',
+            0.5: 'lime',
+            0.7: 'yellow',
+            1.0: 'red'
+          }
+        });
+
+        // Configurar willReadFrequently para mejor performance
+        const canvas = heatLayer._canvas;
+        if (canvas) {
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
         }
-      }).addTo(mapInstanceRef.current);
 
-      heatLayerRef.current = heatLayer;
+        heatLayer.addTo(mapInstanceRef.current);
+        heatLayerRef.current = heatLayer;
+      }
 
       // Añadir marcadores para cada oferta
       filteredOffers.forEach(offer => {
@@ -100,16 +168,14 @@ export const MapaOfertas = () => {
 
           marker.bindPopup(`
             <div class="offer-popup">
-              <h4>${offer.local_name}</h4>
-              <p class="offer-title">${offer.title}</p>
+              <h4>${offer.local_name || 'Restaurante'}</h4>
+              <p class="offer-title">${offer.title || 'Oferta especial'}</p>
               <p class="offer-discount">${offer.discount_percentage}% OFF</p>
-              <p class="offer-price">
-                <span class="original">${offer.original_price}€</span>
-                <span class="discounted">${offer.discounted_price}€</span>
-              </p>
-              <p class="offer-city">${offer.local_city}</p>
+              <p class="offer-city">${offer.local_city || ''}</p>
             </div>
           `);
+
+          markersRef.current.push(marker);
         }
       });
 
@@ -120,6 +186,9 @@ export const MapaOfertas = () => {
           selectedCity !== "todas" ? 12 : 6
         );
       }
+    } catch (error) {
+      console.error("Error updating heatmap:", error);
+      setError("Error al actualizar el mapa. Algunos elementos pueden no mostrarse correctamente.");
     }
   };
 
@@ -157,6 +226,27 @@ export const MapaOfertas = () => {
       <div className="loading-container">
         <div className="loading-spinner"></div>
         <p>Cargando mapa de ofertas...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <div className="error-message">
+          <h2>⚠️ Error</h2>
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()}>Recargar página</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (offers.length === 0) {
+    return (
+      <div className="empty-container">
+        <h2>No hay ofertas disponibles</h2>
+        <p>Vuelve más tarde para ver nuevas ofertas.</p>
       </div>
     );
   }
