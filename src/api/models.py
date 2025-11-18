@@ -178,3 +178,50 @@ class Review(db.Model):
             "comment": self.comment,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
+
+
+# TABLA PARA EVENTOS GASTRONÓMICOS
+class GastronomicEvent(db.Model):
+    __tablename__ = 'gastronomic_event'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    event_type = db.Column(db.String(50), nullable=False)  # cata, pack, taller, degustacion
+    price = db.Column(db.Float, nullable=False)
+    image_url = db.Column(db.String(500), nullable=True)
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+    max_participants = db.Column(db.Integer, default=20)
+    current_participants = db.Column(db.Integer, default=0)
+    local_id = db.Column(db.Integer, db.ForeignKey('locales.id'), nullable=True)
+    city = db.Column(db.String(100), nullable=False)
+    address = db.Column(db.String(300), nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relación
+    local = db.relationship('Locales', backref=db.backref('events', lazy=True))
+    
+    def __repr__(self):
+        return f'<GastronomicEvent {self.id} - {self.title}>'
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "event_type": self.event_type,
+            "price": self.price,
+            "image_url": self.image_url,
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "max_participants": self.max_participants,
+            "current_participants": self.current_participants,
+            "available_spots": self.max_participants - self.current_participants,
+            "local_id": self.local_id,
+            "local_name": self.local.nombre if self.local else None,
+            "city": self.city,
+            "address": self.address,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }

@@ -18,6 +18,7 @@ import injectContext from "./store/appContext";
 
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
+import { Chatbot } from "./component/chatbot";
 import { Restaurante } from "./pages/restaurante";
 import { Restaurantes } from "./pages/restaurantes";
 import { Nosotros } from "./pages/sobreNosotros";
@@ -59,6 +60,7 @@ const Layout = () => {
 
             <Route element={<h1>Not found!</h1>} />
           </Routes>
+          <Chatbot />
           <Footer />
         </ScrollToTop>
       </BrowserRouter>
