@@ -26,6 +26,8 @@ import { Context } from "./store/appContext";
 import { RutaComida } from "./pages/rutaComida";
 import { ExperienciaGastronomica } from "./pages/experienciaGastronomica";
 import { MapaOfertas } from "./pages/mapaOfertas";
+import { DashboardRestaurante } from "./pages/dashboardRestaurante";
+import { MisListas } from "./pages/misListas";
 
 //create your first component
 const Layout = () => {
@@ -44,8 +46,10 @@ const Layout = () => {
             <Route element={<LoginView />} path="/login" />
 
             <Route element={<Usuario />} path="/usuario" />
+            <Route element={<MisListas />} path="/mis-listas" />
 
             <Route element={<Restaurante />} path="/restaurante" />
+            <Route element={<DashboardRestaurante />} path="/dashboard-restaurante" />
             <Route element={<EditInfo />} path="/editInfo" />
 
             <Route element={<Contacto />} path="/contacto" />

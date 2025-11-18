@@ -959,3 +959,83 @@ def reorder_list_items(list_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': 'Error reordering list', 'error': str(e)}), 500
+
+
+# ============================================
+# DASHBOARD PARA RESTAURANTES
+# ============================================
+
+@api.route('/restaurant/dashboard', methods=['GET'])
+@jwt_required()
+def get_restaurant_dashboard():
+    """Obtener estadísticas completas del restaurante"""
+    try:
+        email = get_jwt_identity()
+        local = Locales.query.filter_by(email=email).first()
+        
+        if not local:
+            return jsonify({'message': 'Restaurant not found'}), 404
+        
+        # Reservas
+        reservations = Reservation.query.filter_by(local_id=local.id).all()
+        total_reservations = len(reservations)
+        
+        # Reservas por mes (últimos 6 meses)
+        from collections import defaultdict
+        reservations_by_month = defaultdict(int)
+        for res in reservations:
+            if res.date:
+                month_key = res.date.strftime('%Y-%m')
+                reservations_by_month[month_key] += 1
+        
+        # Reviews
+        reviews = Review.query.filter_by(local_id=local.id).all()
+        total_reviews = len(reviews)
+        avg_rating = sum(r.rating for r in reviews) / total_reviews if total_reviews > 0 else 0
+        
+        # Ofertas
+        offers = Offer.query.filter_by(local_id=local.id).all()
+        active_offers = [o for o in offers if o.is_active and o.end_date >= dt.now()]
+        
+        # Eventos
+        events = GastronomicEvent.query.filter_by(local_id=local.id).all()
+        active_events = [e for e in events if e.is_active and e.end_date >= dt.now()]
+        
+        # Favoritos (aproximación)
+        favorites_count = len(local.favoritos) if hasattr(local, 'favoritos') else 0
+        
+        return jsonify({
+            'restaurant_info': {
+                'id': local.id,
+                'name': local.nombre,
+                'city': local.ciudad,
+                'type': local.tipo_local
+            },
+            'reservations': {
+                'total': total_reservations,
+                'by_month': dict(sorted(reservations_by_month.items())[-6:]),
+                'recent': [r.serialize() for r in sorted(reservations, key=lambda x: x.date, reverse=True)[:5]]
+            },
+            'reviews': {
+                'total': total_reviews,
+                'average_rating': round(avg_rating, 1),
+                'recent': [r.serialize() for r in sorted(reviews, key=lambda x: x.created_at, reverse=True)[:5]]
+            },
+            'offers': {
+                'total': len(offers),
+                'active': len(active_offers),
+                'list': [o.serialize() for o in active_offers]
+            },
+            'events': {
+                'total': len(events),
+                'active': len(active_events),
+                'list': [e.serialize() for e in active_events]
+            },
+            'engagement': {
+                'favorites': favorites_count,
+                'total_reviews': total_reviews
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': 'Error fetching dashboard', 'error': str(e)}), 500
