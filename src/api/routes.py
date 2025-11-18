@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Locales, Direccion, Reservation, Review
+from api.models import db, User, Locales, Direccion, Reservation, Review, GastronomicEvent
 from api.utils import generate_sitemap, APIException
 import json
 import datetime
@@ -662,3 +662,67 @@ def get_review_stats(local_id):
     except Exception as e:
         print(f"Error al obtener estadísticas: {str(e)}")
         return jsonify({'message': 'Error al obtener estadísticas'}), 500
+
+
+# ============================================
+# ENDPOINTS DE EVENTOS GASTRONÓMICOS
+# ============================================
+
+@api.route('/gastronomic-events', methods=['GET'])
+def get_gastronomic_events():
+    """Obtener todos los eventos gastronómicos activos"""
+    try:
+        events = GastronomicEvent.query.filter_by(is_active=True).filter(
+            GastronomicEvent.end_date >= dt.now()
+        ).order_by(GastronomicEvent.start_date).all()
+        
+        return jsonify([event.serialize() for event in events]), 200
+    except Exception as e:
+        return jsonify({'message': 'Error fetching events', 'error': str(e)}), 500
+
+@api.route('/gastronomic-events/<int:event_id>', methods=['GET'])
+def get_gastronomic_event(event_id):
+    """Obtener un evento específico"""
+    try:
+        event = GastronomicEvent.query.get(event_id)
+        if not event:
+            return jsonify({'message': 'Event not found'}), 404
+        
+        return jsonify(event.serialize()), 200
+    except Exception as e:
+        return jsonify({'message': 'Error fetching event', 'error': str(e)}), 500
+
+@api.route('/gastronomic-events', methods=['POST'])
+@jwt_required()
+def create_gastronomic_event():
+    """Crear un nuevo evento gastronómico (solo restaurantes)"""
+    try:
+        email = get_jwt_identity()
+        local = Locales.query.filter_by(email=email).first()
+        
+        if not local:
+            return jsonify({'message': 'Only restaurants can create events'}), 403
+        
+        data = request.get_json()
+        
+        new_event = GastronomicEvent(
+            title=data['title'],
+            description=data['description'],
+            event_type=data['event_type'],
+            price=data['price'],
+            image_url=data.get('image_url'),
+            start_date=dt.fromisoformat(data['start_date']),
+            end_date=dt.fromisoformat(data['end_date']),
+            max_participants=data.get('max_participants', 20),
+            local_id=local.id,
+            city=local.ciudad,
+            address=data.get('address', local.direccion)
+        )
+        
+        db.session.add(new_event)
+        db.session.commit()
+        
+        return jsonify(new_event.serialize()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Error creating event', 'error': str(e)}), 500

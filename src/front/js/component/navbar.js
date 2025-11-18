@@ -29,6 +29,9 @@ export const Navbar = () => {
               <Link to="/restaurantes" className="btn-navbar">
                 Restaurantes
               </Link>
+              <Link to="/experiencia-gastronomica" className="btn-navbar">
+                Experiencias
+              </Link>
             </div>
             
             <div className="navbar-actions">
@@ -70,6 +73,9 @@ export const Navbar = () => {
               </Link>
               <Link to="/restaurantes" className="btn-navbar">
                 Restaurantes
+              </Link>
+              <Link to="/experiencia-gastronomica" className="btn-navbar">
+                Experiencias
               </Link>
             </div>
             
