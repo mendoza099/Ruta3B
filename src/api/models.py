@@ -225,3 +225,114 @@ class GastronomicEvent(db.Model):
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
+
+
+# TABLA PARA OFERTAS DE RESTAURANTES
+class Offer(db.Model):
+    __tablename__ = 'offer'
+    id = db.Column(db.Integer, primary_key=True)
+    local_id = db.Column(db.Integer, db.ForeignKey('locales.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    discount_percentage = db.Column(db.Integer, nullable=False)  # 10, 20, 30, etc.
+    original_price = db.Column(db.Float, nullable=True)
+    discounted_price = db.Column(db.Float, nullable=True)
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+    terms_conditions = db.Column(db.Text, nullable=True)
+    max_uses = db.Column(db.Integer, default=100)
+    current_uses = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relación
+    local = db.relationship('Locales', backref=db.backref('offers', lazy=True))
+    
+    def __repr__(self):
+        return f'<Offer {self.id} - {self.title}>'
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "local_id": self.local_id,
+            "local_name": self.local.nombre if self.local else None,
+            "local_city": self.local.ciudad if self.local else None,
+            "local_address": self.local.direccion if self.local else None,
+            "local_latitude": self.local.latitud if self.local else None,
+            "local_longitude": self.local.longitud if self.local else None,
+            "title": self.title,
+            "description": self.description,
+            "discount_percentage": self.discount_percentage,
+            "original_price": self.original_price,
+            "discounted_price": self.discounted_price,
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "terms_conditions": self.terms_conditions,
+            "max_uses": self.max_uses,
+            "current_uses": self.current_uses,
+            "available_uses": self.max_uses - self.current_uses,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+
+# TABLA PARA LISTAS PERSONALIZADAS DE USUARIOS
+class UserList(db.Model):
+    __tablename__ = 'user_list'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    is_public = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relación
+    user = db.relationship('User', backref=db.backref('lists', lazy=True))
+    
+    def __repr__(self):
+        return f'<UserList {self.id} - {self.name}>'
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "name": self.name,
+            "description": self.description,
+            "is_public": self.is_public,
+            "items_count": len(self.items),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+# TABLA PARA ITEMS DE LISTAS
+class ListItem(db.Model):
+    __tablename__ = 'list_item'
+    id = db.Column(db.Integer, primary_key=True)
+    list_id = db.Column(db.Integer, db.ForeignKey('user_list.id'), nullable=False)
+    local_id = db.Column(db.Integer, db.ForeignKey('locales.id'), nullable=False)
+    position = db.Column(db.Integer, nullable=False)
+    notes = db.Column(db.Text, nullable=True)
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relaciones
+    list = db.relationship('UserList', backref=db.backref('items', lazy=True, order_by='ListItem.position'))
+    local = db.relationship('Locales', backref=db.backref('list_items', lazy=True))
+    
+    def __repr__(self):
+        return f'<ListItem {self.id} - List {self.list_id}>'
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "list_id": self.list_id,
+            "local_id": self.local_id,
+            "local_name": self.local.nombre if self.local else None,
+            "local_type": self.local.tipo_local if self.local else None,
+            "local_city": self.local.ciudad if self.local else None,
+            "local_photo": self.local.foto if self.local else None,
+            "position": self.position,
+            "notes": self.notes,
+            "added_at": self.added_at.isoformat() if self.added_at else None
+        }

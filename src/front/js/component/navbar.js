@@ -32,6 +32,9 @@ export const Navbar = () => {
               <Link to="/experiencia-gastronomica" className="btn-navbar">
                 Experiencias
               </Link>
+              <Link to="/mapa-ofertas" className="btn-navbar">
+                Ofertas
+              </Link>
             </div>
             
             <div className="navbar-actions">
@@ -76,6 +79,9 @@ export const Navbar = () => {
               </Link>
               <Link to="/experiencia-gastronomica" className="btn-navbar">
                 Experiencias
+              </Link>
+              <Link to="/mapa-ofertas" className="btn-navbar">
+                Ofertas
               </Link>
             </div>
             

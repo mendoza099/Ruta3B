@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Locales, Direccion, Reservation, Review, GastronomicEvent
+from api.models import db, User, Locales, Direccion, Reservation, Review, GastronomicEvent, Offer, UserList, ListItem
 from api.utils import generate_sitemap, APIException
 import json
 import datetime
@@ -726,3 +726,236 @@ def create_gastronomic_event():
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': 'Error creating event', 'error': str(e)}), 500
+
+
+# ============================================
+# ENDPOINTS DE OFERTAS
+# ============================================
+
+@api.route('/offers', methods=['GET'])
+def get_offers():
+    """Obtener todas las ofertas activas"""
+    try:
+        offers = Offer.query.filter_by(is_active=True).filter(
+            Offer.end_date >= dt.now()
+        ).order_by(Offer.end_date).all()
+        
+        return jsonify([offer.serialize() for offer in offers]), 200
+    except Exception as e:
+        return jsonify({'message': 'Error fetching offers', 'error': str(e)}), 500
+
+@api.route('/offers/<int:local_id>', methods=['GET'])
+def get_local_offers(local_id):
+    """Obtener ofertas de un restaurante específico"""
+    try:
+        offers = Offer.query.filter_by(local_id=local_id, is_active=True).filter(
+            Offer.end_date >= dt.now()
+        ).all()
+        
+        return jsonify([offer.serialize() for offer in offers]), 200
+    except Exception as e:
+        return jsonify({'message': 'Error fetching offers', 'error': str(e)}), 500
+
+@api.route('/offers', methods=['POST'])
+@jwt_required()
+def create_offer():
+    """Crear una nueva oferta (solo restaurantes)"""
+    try:
+        email = get_jwt_identity()
+        local = Locales.query.filter_by(email=email).first()
+        
+        if not local:
+            return jsonify({'message': 'Only restaurants can create offers'}), 403
+        
+        data = request.get_json()
+        
+        new_offer = Offer(
+            local_id=local.id,
+            title=data['title'],
+            description=data['description'],
+            discount_percentage=data['discount_percentage'],
+            original_price=data.get('original_price'),
+            discounted_price=data.get('discounted_price'),
+            start_date=dt.fromisoformat(data['start_date']),
+            end_date=dt.fromisoformat(data['end_date']),
+            terms_conditions=data.get('terms_conditions'),
+            max_uses=data.get('max_uses', 100)
+        )
+        
+        db.session.add(new_offer)
+        db.session.commit()
+        
+        return jsonify(new_offer.serialize()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Error creating offer', 'error': str(e)}), 500
+
+
+# ============================================
+# ENDPOINTS DE LISTAS PERSONALIZADAS
+# ============================================
+
+@api.route('/user-lists', methods=['GET'])
+@jwt_required()
+def get_user_lists():
+    """Obtener todas las listas del usuario"""
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        lists = UserList.query.filter_by(user_id=user.id).all()
+        
+        return jsonify([lst.serialize() for lst in lists]), 200
+    except Exception as e:
+        return jsonify({'message': 'Error fetching lists', 'error': str(e)}), 500
+
+@api.route('/user-lists/<int:list_id>', methods=['GET'])
+@jwt_required()
+def get_user_list(list_id):
+    """Obtener una lista específica con sus items"""
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        user_list = UserList.query.get(list_id)
+        
+        if not user_list or user_list.user_id != user.id:
+            return jsonify({'message': 'List not found'}), 404
+        
+        list_data = user_list.serialize()
+        list_data['items'] = [item.serialize() for item in user_list.items]
+        
+        return jsonify(list_data), 200
+    except Exception as e:
+        return jsonify({'message': 'Error fetching list', 'error': str(e)}), 500
+
+@api.route('/user-lists', methods=['POST'])
+@jwt_required()
+def create_user_list():
+    """Crear una nueva lista"""
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        data = request.get_json()
+        
+        new_list = UserList(
+            user_id=user.id,
+            name=data['name'],
+            description=data.get('description'),
+            is_public=data.get('is_public', False)
+        )
+        
+        db.session.add(new_list)
+        db.session.commit()
+        
+        return jsonify(new_list.serialize()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Error creating list', 'error': str(e)}), 500
+
+@api.route('/user-lists/<int:list_id>/items', methods=['POST'])
+@jwt_required()
+def add_item_to_list(list_id):
+    """Añadir un restaurante a una lista"""
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        user_list = UserList.query.get(list_id)
+        
+        if not user_list or user_list.user_id != user.id:
+            return jsonify({'message': 'List not found'}), 404
+        
+        data = request.get_json()
+        
+        # Obtener la última posición
+        last_item = ListItem.query.filter_by(list_id=list_id).order_by(ListItem.position.desc()).first()
+        next_position = (last_item.position + 1) if last_item else 0
+        
+        new_item = ListItem(
+            list_id=list_id,
+            local_id=data['local_id'],
+            position=next_position,
+            notes=data.get('notes')
+        )
+        
+        db.session.add(new_item)
+        db.session.commit()
+        
+        return jsonify(new_item.serialize()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Error adding item', 'error': str(e)}), 500
+
+@api.route('/user-lists/<int:list_id>/items/<int:item_id>', methods=['DELETE'])
+@jwt_required()
+def remove_item_from_list(list_id, item_id):
+    """Eliminar un restaurante de una lista"""
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        user_list = UserList.query.get(list_id)
+        
+        if not user_list or user_list.user_id != user.id:
+            return jsonify({'message': 'List not found'}), 404
+        
+        item = ListItem.query.get(item_id)
+        
+        if not item or item.list_id != list_id:
+            return jsonify({'message': 'Item not found'}), 404
+        
+        db.session.delete(item)
+        db.session.commit()
+        
+        return jsonify({'message': 'Item removed successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Error removing item', 'error': str(e)}), 500
+
+@api.route('/user-lists/<int:list_id>/reorder', methods=['PUT'])
+@jwt_required()
+def reorder_list_items(list_id):
+    """Reordenar items de una lista"""
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        user_list = UserList.query.get(list_id)
+        
+        if not user_list or user_list.user_id != user.id:
+            return jsonify({'message': 'List not found'}), 404
+        
+        data = request.get_json()
+        items_order = data['items']  # Array de {id, position}
+        
+        for item_data in items_order:
+            item = ListItem.query.get(item_data['id'])
+            if item and item.list_id == list_id:
+                item.position = item_data['position']
+        
+        db.session.commit()
+        
+        return jsonify({'message': 'List reordered successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Error reordering list', 'error': str(e)}), 500

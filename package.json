@@ -80,6 +80,8 @@
 		"google-map-react": "^2.2.0",
 		"google-maps": "^4.3.3",
 		"google-maps-react": "^2.0.6",
+		"leaflet": "^1.9.4",
+		"leaflet.heat": "^0.2.0",
 		"prop-types": "^15.6.1",
 		"react": "^16.14.0",
 		"react-dom": "^16.14.0",
