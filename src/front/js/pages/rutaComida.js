@@ -4,6 +4,7 @@ import { Context } from "../store/appContext";
 import "../../styles/perfilRestaurante.css";
 import { Reviews } from "../component/reviews";
 import RestaurantMap from "../component/restaurantMap";
+import Swal from "sweetalert2";
 
 export const RutaComida = ({ nombre, descripcion, id, tipo_local }) => {
   const { store, actions } = useContext(Context);
@@ -20,12 +21,22 @@ export const RutaComida = ({ nombre, descripcion, id, tipo_local }) => {
     e.preventDefault();
     
     if (!restaurant) {
-      alert("Restaurante no encontrado");
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Restaurante no encontrado',
+        confirmButtonColor: '#667eea'
+      });
       return;
     }
 
     if (!date) {
-      alert("Por favor selecciona una fecha");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Fecha requerida',
+        text: 'Por favor selecciona una fecha',
+        confirmButtonColor: '#667eea'
+      });
       return;
     }
 

@@ -2,6 +2,8 @@ import React, { useState, useContext, useEffect } from "react";
 import { Context } from "../store/appContext";
 import { Link } from "react-router-dom";
 import { Navigate } from "react-router-dom";
+import Swal from "sweetalert2";
+
 const getState = ({ getStore, getActions, setStore }) => {
   const [type, setType] = useState(false);
 
@@ -50,7 +52,12 @@ const getState = ({ getStore, getActions, setStore }) => {
             auth: true,
           });
         } else if (response.status === 208) {
-          alert("Este restaurante ya lo tienes en favoritos");
+          Swal.fire({
+            icon: 'info',
+            title: 'Ya en favoritos',
+            text: 'Este restaurante ya lo tienes en favoritos',
+            confirmButtonColor: '#667eea'
+          });
         }
 
         // console.log(data);
@@ -126,23 +133,47 @@ const getState = ({ getStore, getActions, setStore }) => {
           
           if (response.status === 201) {
             const data = await response.json();
-            alert("¡Reserva creada exitosamente!");
-            // Recargar reservas
+            Swal.fire({
+              icon: 'success',
+              title: '¡Reserva creada!',
+              text: 'Tu reserva ha sido creada exitosamente',
+              confirmButtonColor: '#667eea'
+            });
             getActions().getReservations();
             return true;
           } else if (response.status === 409) {
-            alert("Ya tienes una reserva para esta fecha en este restaurante");
+            Swal.fire({
+              icon: 'warning',
+              title: 'Reserva duplicada',
+              text: 'Ya tienes una reserva para esta fecha en este restaurante',
+              confirmButtonColor: '#667eea'
+            });
             return false;
           } else if (response.status === 400) {
             const error = await response.json();
-            alert(error.message || "Datos inválidos");
+            Swal.fire({
+              icon: 'error',
+              title: 'Datos inválidos',
+              text: error.message || 'Por favor verifica los datos',
+              confirmButtonColor: '#667eea'
+            });
             return false;
           } else {
-            alert("Error al crear la reserva");
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'No se pudo crear la reserva',
+              confirmButtonColor: '#667eea'
+            });
             return false;
           }
         } catch (err) {
-          alert("Error al crear la reserva. Por favor, intenta de nuevo.");
+          Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'Error al crear la reserva. Por favor, intenta de nuevo.',
+            confirmButtonColor: '#667eea'
+          });
           return false;
         }
       },
@@ -187,16 +218,30 @@ const getState = ({ getStore, getActions, setStore }) => {
           );
           
           if (response.ok) {
-            alert("Reserva cancelada exitosamente");
-            // Recargar reservas
+            Swal.fire({
+              icon: 'success',
+              title: 'Reserva cancelada',
+              text: 'La reserva ha sido cancelada exitosamente',
+              confirmButtonColor: '#667eea'
+            });
             getActions().getReservations();
             return true;
           } else {
-            alert("Error al cancelar la reserva");
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'No se pudo cancelar la reserva',
+              confirmButtonColor: '#667eea'
+            });
             return false;
           }
         } catch (err) {
-          alert("Error al cancelar la reserva");
+          Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'Error al cancelar la reserva',
+            confirmButtonColor: '#667eea'
+          });
           return false;
         }
       },
@@ -217,15 +262,30 @@ const getState = ({ getStore, getActions, setStore }) => {
           );
           
           if (response.ok) {
-            alert("Reserva actualizada exitosamente");
+            Swal.fire({
+              icon: 'success',
+              title: 'Reserva actualizada',
+              text: 'La reserva ha sido actualizada exitosamente',
+              confirmButtonColor: '#667eea'
+            });
             getActions().getReservations();
             return true;
           } else {
-            alert("Error al actualizar la reserva");
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'No se pudo actualizar la reserva',
+              confirmButtonColor: '#667eea'
+            });
             return false;
           }
         } catch (err) {
-          alert("Error al actualizar la reserva");
+          Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'Error al actualizar la reserva',
+            confirmButtonColor: '#667eea'
+          });
           return false;
         }
       },
@@ -390,10 +450,20 @@ const getState = ({ getStore, getActions, setStore }) => {
           const data = await response.json();
           return true;
         } else if (response.status === 409) {
-          alert("Ya hay un usuario registrado con ese email");
+          Swal.fire({
+            icon: 'warning',
+            title: 'Email ya registrado',
+            text: 'Ya hay un usuario registrado con ese email',
+            confirmButtonColor: '#667eea'
+          });
           return false;
         } else {
-          alert("Error al registrar usuario. Por favor, intenta de nuevo.");
+          Swal.fire({
+            icon: 'error',
+            title: 'Error de registro',
+            text: 'Error al registrar usuario. Por favor, intenta de nuevo.',
+            confirmButtonColor: '#667eea'
+          });
           return false;
         }
         
@@ -542,10 +612,19 @@ const getState = ({ getStore, getActions, setStore }) => {
                     }
                   );
                   if (response.ok) {
-                    
-                    alert("Datos guardados");
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Datos guardados',
+                      text: 'Los cambios se han guardado correctamente',
+                      confirmButtonColor: '#667eea'
+                    });
                   } else {
-                    alert("No se ha podido modificar el dato");
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Error',
+                      text: 'No se ha podido modificar el dato',
+                      confirmButtonColor: '#667eea'
+                    });
                   }
 
              }
