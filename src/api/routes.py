@@ -397,6 +397,25 @@ def edit_info_general_locales(id):
 # NUEVOS ENDPOINTS DE RESERVAS
 # ============================================
 
+@api.route('/reservations', methods=['GET'])
+@jwt_required()
+def get_user_reservations():
+    """Obtener todas las reservas del usuario actual"""
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        # Obtener todas las reservas del usuario
+        reservations = Reservation.query.filter_by(user_id=user.id).order_by(Reservation.date.desc()).all()
+        
+        return jsonify([r.serialize() for r in reservations]), 200
+        
+    except Exception as e:
+        return jsonify({'message': 'Error fetching reservations', 'error': str(e)}), 500
+
 @api.route('/reservations', methods=['POST'])
 @jwt_required()
 def create_reservation():
@@ -471,6 +490,37 @@ def create_reservation():
         db.session.commit()
         
         return jsonify(new_reservation.serialize()), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Server error', 'error': str(e)}), 500
+
+@api.route('/reservations/<int:reservation_id>', methods=['DELETE'])
+@jwt_required()
+def cancel_reservation(reservation_id):
+    """Cancelar una reserva"""
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        # Buscar la reserva
+        reservation = Reservation.query.get(reservation_id)
+        
+        if not reservation:
+            return jsonify({'message': 'Reservation not found'}), 404
+        
+        # Verificar que la reserva pertenece al usuario
+        if reservation.user_id != user.id:
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        # Eliminar la reserva
+        db.session.delete(reservation)
+        db.session.commit()
+        
+        return jsonify({'message': 'Reservation cancelled successfully'}), 200
     
     except Exception as e:
         db.session.rollback()
