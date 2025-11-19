@@ -1,0 +1,509 @@
+/* ============================================
+   ESTILOS RESPONSIVE GLOBALES
+   ============================================ */
+
+/* Variables CSS para consistencia */
+:root {
+  --primary-color: #667eea;
+  --secondary-color: #ffc843;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --text-dark: #2d3748;
+  --text-muted: #718096;
+  --bg-light: #f7fafc;
+  --border-color: #e2e8f0;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --border-radius: 10px;
+  --transition: all 0.3s ease;
+}
+
+/* Reset y base */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Contenedores responsive */
+.container-fluid {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.container {
+  width: 100%;
+  padding-left: 15px;
+  padding-right: 15px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Imágenes responsive */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Botones responsive */
+.btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-lg {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+/* Cards responsive */
+.card {
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Grid responsive */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -15px;
+  margin-right: -15px;
+}
+
+[class*="col-"] {
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 100%;
+}
+
+/* Utilidades de espaciado responsive */
+.p-responsive {
+  padding: 1rem;
+}
+
+.m-responsive {
+  margin: 1rem;
+}
+
+/* ============================================
+   MOBILE FIRST - Base (< 576px)
+   ============================================ */
+
+/* Ocultar en móvil */
+.hide-mobile {
+  display: none !important;
+}
+
+/* Texto centrado en móvil */
+.text-center-mobile {
+  text-align: center;
+}
+
+/* Stack en móvil */
+.stack-mobile {
+  flex-direction: column;
+}
+
+/* Ancho completo en móvil */
+.full-width-mobile {
+  width: 100% !important;
+}
+
+/* Padding reducido en móvil */
+.p-mobile-sm {
+  padding: 0.5rem !important;
+}
+
+/* Margin reducido en móvil */
+.m-mobile-sm {
+  margin: 0.5rem !important;
+}
+
+/* Fuentes responsive */
+h1, .h1 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+h2, .h2 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+h3, .h3 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+h4, .h4 {
+  font-size: 1.125rem;
+  line-height: 1.4;
+}
+
+.display-1 {
+  font-size: 2.5rem;
+}
+
+.display-2 {
+  font-size: 2rem;
+}
+
+.display-3 {
+  font-size: 1.75rem;
+}
+
+.display-4 {
+  font-size: 1.5rem;
+}
+
+/* ============================================
+   SMALL DEVICES (≥576px)
+   ============================================ */
+@media (min-width: 576px) {
+  .container {
+    max-width: 540px;
+  }
+
+  .col-sm-1 { width: 8.333333%; }
+  .col-sm-2 { width: 16.666667%; }
+  .col-sm-3 { width: 25%; }
+  .col-sm-4 { width: 33.333333%; }
+  .col-sm-5 { width: 41.666667%; }
+  .col-sm-6 { width: 50%; }
+  .col-sm-7 { width: 58.333333%; }
+  .col-sm-8 { width: 66.666667%; }
+  .col-sm-9 { width: 75%; }
+  .col-sm-10 { width: 83.333333%; }
+  .col-sm-11 { width: 91.666667%; }
+  .col-sm-12 { width: 100%; }
+
+  .hide-sm {
+    display: none !important;
+  }
+
+  .show-sm {
+    display: block !important;
+  }
+
+  h1, .h1 { font-size: 2rem; }
+  h2, .h2 { font-size: 1.75rem; }
+  .display-1 { font-size: 3rem; }
+  .display-2 { font-size: 2.5rem; }
+  .display-3 { font-size: 2rem; }
+  .display-4 { font-size: 1.75rem; }
+}
+
+/* ============================================
+   MEDIUM DEVICES (≥768px)
+   ============================================ */
+@media (min-width: 768px) {
+  .container {
+    max-width: 720px;
+  }
+
+  .col-md-1 { width: 8.333333%; }
+  .col-md-2 { width: 16.666667%; }
+  .col-md-3 { width: 25%; }
+  .col-md-4 { width: 33.333333%; }
+  .col-md-5 { width: 41.666667%; }
+  .col-md-6 { width: 50%; }
+  .col-md-7 { width: 58.333333%; }
+  .col-md-8 { width: 66.666667%; }
+  .col-md-9 { width: 75%; }
+  .col-md-10 { width: 83.333333%; }
+  .col-md-11 { width: 91.666667%; }
+  .col-md-12 { width: 100%; }
+
+  .hide-md {
+    display: none !important;
+  }
+
+  .show-md {
+    display: block !important;
+  }
+
+  .hide-mobile {
+    display: block !important;
+  }
+
+  .text-center-mobile {
+    text-align: left;
+  }
+
+  .stack-mobile {
+    flex-direction: row;
+  }
+
+  .p-responsive {
+    padding: 1.5rem;
+  }
+
+  .m-responsive {
+    margin: 1.5rem;
+  }
+
+  h1, .h1 { font-size: 2.5rem; }
+  h2, .h2 { font-size: 2rem; }
+  h3, .h3 { font-size: 1.75rem; }
+  .display-1 { font-size: 4rem; }
+  .display-2 { font-size: 3.5rem; }
+  .display-3 { font-size: 3rem; }
+  .display-4 { font-size: 2.5rem; }
+}
+
+/* ============================================
+   LARGE DEVICES (≥992px)
+   ============================================ */
+@media (min-width: 992px) {
+  .container {
+    max-width: 960px;
+  }
+
+  .col-lg-1 { width: 8.333333%; }
+  .col-lg-2 { width: 16.666667%; }
+  .col-lg-3 { width: 25%; }
+  .col-lg-4 { width: 33.333333%; }
+  .col-lg-5 { width: 41.666667%; }
+  .col-lg-6 { width: 50%; }
+  .col-lg-7 { width: 58.333333%; }
+  .col-lg-8 { width: 66.666667%; }
+  .col-lg-9 { width: 75%; }
+  .col-lg-10 { width: 83.333333%; }
+  .col-lg-11 { width: 91.666667%; }
+  .col-lg-12 { width: 100%; }
+
+  .hide-lg {
+    display: none !important;
+  }
+
+  .show-lg {
+    display: block !important;
+  }
+
+  .p-responsive {
+    padding: 2rem;
+  }
+
+  .m-responsive {
+    margin: 2rem;
+  }
+
+  h1, .h1 { font-size: 3rem; }
+  h2, .h2 { font-size: 2.5rem; }
+  .display-1 { font-size: 5rem; }
+  .display-2 { font-size: 4.5rem; }
+  .display-3 { font-size: 4rem; }
+  .display-4 { font-size: 3.5rem; }
+}
+
+/* ============================================
+   EXTRA LARGE DEVICES (≥1200px)
+   ============================================ */
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1140px;
+  }
+
+  .col-xl-1 { width: 8.333333%; }
+  .col-xl-2 { width: 16.666667%; }
+  .col-xl-3 { width: 25%; }
+  .col-xl-4 { width: 33.333333%; }
+  .col-xl-5 { width: 41.666667%; }
+  .col-xl-6 { width: 50%; }
+  .col-xl-7 { width: 58.333333%; }
+  .col-xl-8 { width: 66.666667%; }
+  .col-xl-9 { width: 75%; }
+  .col-xl-10 { width: 83.333333%; }
+  .col-xl-11 { width: 91.666667%; }
+  .col-xl-12 { width: 100%; }
+
+  .hide-xl {
+    display: none !important;
+  }
+
+  .show-xl {
+    display: block !important;
+  }
+}
+
+/* ============================================
+   UTILIDADES RESPONSIVE ADICIONALES
+   ============================================ */
+
+/* Flex utilities */
+.d-flex {
+  display: flex !important;
+}
+
+.flex-column {
+  flex-direction: column !important;
+}
+
+.flex-row {
+  flex-direction: row !important;
+}
+
+.flex-wrap {
+  flex-wrap: wrap !important;
+}
+
+.justify-content-center {
+  justify-content: center !important;
+}
+
+.justify-content-between {
+  justify-content: space-between !important;
+}
+
+.align-items-center {
+  align-items: center !important;
+}
+
+.align-items-start {
+  align-items: flex-start !important;
+}
+
+/* Spacing utilities responsive */
+@media (max-width: 767px) {
+  .mb-mobile-3 { margin-bottom: 1rem !important; }
+  .mt-mobile-3 { margin-top: 1rem !important; }
+  .px-mobile-2 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+  .py-mobile-2 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+}
+
+/* Text utilities responsive */
+@media (max-width: 767px) {
+  .text-mobile-center { text-align: center !important; }
+  .text-mobile-left { text-align: left !important; }
+}
+
+/* Width utilities */
+.w-100 { width: 100% !important; }
+.w-75 { width: 75% !important; }
+.w-50 { width: 50% !important; }
+.w-25 { width: 25% !important; }
+
+@media (max-width: 767px) {
+  .w-mobile-100 { width: 100% !important; }
+}
+
+/* Height utilities */
+.h-100 { height: 100% !important; }
+.h-auto { height: auto !important; }
+
+/* Overflow utilities */
+.overflow-hidden { overflow: hidden !important; }
+.overflow-auto { overflow: auto !important; }
+.overflow-x-hidden { overflow-x: hidden !important; }
+
+/* Position utilities */
+.position-relative { position: relative !important; }
+.position-absolute { position: absolute !important; }
+.position-fixed { position: fixed !important; }
+.position-sticky { position: sticky !important; }
+
+/* Display utilities */
+.d-none { display: none !important; }
+.d-block { display: block !important; }
+.d-inline { display: inline !important; }
+.d-inline-block { display: inline-block !important; }
+
+@media (max-width: 767px) {
+  .d-mobile-none { display: none !important; }
+  .d-mobile-block { display: block !important; }
+}
+
+@media (min-width: 768px) {
+  .d-desktop-none { display: none !important; }
+  .d-desktop-block { display: block !important; }
+}
+
+/* Gap utilities for flex */
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 1rem; }
+.gap-4 { gap: 1.5rem; }
+.gap-5 { gap: 3rem; }
+
+/* Border radius utilities */
+.rounded { border-radius: var(--border-radius) !important; }
+.rounded-lg { border-radius: 15px !important; }
+.rounded-xl { border-radius: 20px !important; }
+.rounded-circle { border-radius: 50% !important; }
+
+/* Shadow utilities */
+.shadow-sm { box-shadow: var(--shadow-sm) !important; }
+.shadow { box-shadow: var(--shadow-md) !important; }
+.shadow-lg { box-shadow: var(--shadow-lg) !important; }
+.shadow-none { box-shadow: none !important; }
+
+/* Transition utilities */
+.transition { transition: var(--transition) !important; }
+
+/* Cursor utilities */
+.cursor-pointer { cursor: pointer !important; }
+
+/* User select utilities */
+.user-select-none { user-select: none !important; }
+
+/* ============================================
+   FIXES ESPECÍFICOS PARA COMPONENTES
+   ============================================ */
+
+/* Fix para tablas responsive */
+@media (max-width: 767px) {
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Fix para modals responsive */
+@media (max-width: 767px) {
+  .modal-dialog {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+}
+
+/* Fix para forms responsive */
+@media (max-width: 767px) {
+  .form-control {
+    font-size: 16px; /* Previene zoom en iOS */
+  }
+}
+
+/* Fix para navbar responsive */
+@media (max-width: 991px) {
+  .navbar-collapse {
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+}
