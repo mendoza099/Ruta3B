@@ -1,0 +1,266 @@
+/* Estilos modernos para la página de detalle del restaurante */
+
+.restaurant-hero {
+  animation: fadeIn 0.6s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.restaurant-hero-content {
+  animation: slideUp 0.8s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Efectos hover para cards */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Animación para info items */
+.info-item {
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.info-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.info-item:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.info-item:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.info-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Estilos para inputs del formulario */
+.form-control:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
+/* Botón de favorito animado */
+.btn-light:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Badge animado */
+.badge {
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Sticky reservation card */
+.sticky-top {
+  position: sticky;
+  top: 20px;
+  z-index: 100;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+  .restaurant-hero {
+    height: 400px;
+  }
+  
+  .restaurant-hero-content {
+    padding: 1.5rem !important;
+  }
+  
+  .display-4 {
+    font-size: 2rem !important;
+  }
+  
+  .sticky-top {
+    position: relative;
+    top: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .restaurant-hero {
+    height: 350px;
+  }
+  
+  .restaurant-hero-content {
+    padding: 1rem !important;
+  }
+  
+  .display-4 {
+    font-size: 1.5rem !important;
+  }
+  
+  .lead {
+    font-size: 1rem !important;
+  }
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Loading animation */
+.loading-spinner {
+  display: inline-block;
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(102, 126, 234, 0.3);
+  border-radius: 50%;
+  border-top-color: #667eea;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Price symbol styling */
+.price-symbol {
+  color: #f59e0b;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+/* Map container styling */
+.map-container {
+  height: 400px;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+/* Review card styling */
+.review-card {
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+}
+
+.review-card:hover {
+  border-left-color: #667eea;
+  background-color: #f7fafc;
+  transform: translateX(5px);
+}
+
+/* Button hover effects */
+.btn {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Success message styling */
+.success-message {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 10px;
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card header gradient */
+.card-header-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Shadow utilities */
+.shadow-soft {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.shadow-hover {
+  transition: box-shadow 0.3s ease;
+}
+
+.shadow-hover:hover {
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+}

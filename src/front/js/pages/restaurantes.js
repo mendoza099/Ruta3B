@@ -18,8 +18,9 @@ export const Restaurantes = () => {
 
   // Definir países y sus ciudades
   const countryCities = {
-    "España": ["Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza", "Alicante", "Salamanca", "Zamora", "Bilbao", "Cáceres", "San Sebastián"],
-    "Portugal": ["Lisboa", "Porto", "Faro", "Coimbra", "Braga"]
+    "España": ["Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza", "Málaga", "Murcia", "Palma de Mallorca", "Las Palmas", "Bilbao", "Alicante", "Córdoba", "Valladolid", "Vigo", "Gijón", "Granada", "San Sebastián", "Salamanca", "Toledo", "Cáceres"],
+    "Portugal": ["Lisboa", "Porto", "Faro", "Coimbra", "Braga", "Évora", "Funchal", "Aveiro", "Setúbal", "Guimarães", "Viseu", "Leiria", "Cascais", "Sintra", "Portimão"],
+    "Francia": ["París", "Marsella", "Lyon", "Toulouse", "Niza", "Nantes", "Estrasburgo", "Montpellier", "Burdeos", "Lille", "Rennes", "Reims", "Le Havre", "Saint-Étienne", "Toulon", "Grenoble", "Dijon", "Angers", "Nîmes", "Aix-en-Provence"]
   };
 
   // Obtener países
@@ -42,7 +43,8 @@ export const Restaurantes = () => {
   const filteredRestaurants = store.restaurantes.filter((item) => {
     const matchCountry = selectedCountry === "todos" || 
       (selectedCountry === "España" && countryCities["España"].includes(item.ciudad)) ||
-      (selectedCountry === "Portugal" && countryCities["Portugal"].includes(item.ciudad));
+      (selectedCountry === "Portugal" && countryCities["Portugal"].includes(item.ciudad)) ||
+      (selectedCountry === "Francia" && countryCities["Francia"].includes(item.ciudad));
     const matchCity = selectedCity === "todas" || item.ciudad === selectedCity;
     const matchType = selectedType === "todos" || item.tipo_local === selectedType;
     const matchPrice = selectedPrice === "todos" || item.precio === parseInt(selectedPrice);
