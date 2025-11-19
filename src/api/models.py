@@ -276,6 +276,45 @@ class Offer(db.Model):
         }
 
 
+# TABLA PARA RESERVAS DE EXPERIENCIAS GASTRONÓMICAS
+class EventReservation(db.Model):
+    __tablename__ = 'event_reservation'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('gastronomic_event.id'), nullable=False)
+    participants = db.Column(db.Integer, default=1)
+    status = db.Column(db.String(20), default='confirmed')  # confirmed, cancelled, completed
+    notes = db.Column(db.String(500), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relaciones
+    user = db.relationship('User', backref=db.backref('event_reservations', lazy=True))
+    event = db.relationship('GastronomicEvent', backref=db.backref('reservations', lazy=True))
+    
+    def __repr__(self):
+        return f'<EventReservation {self.id} - User {self.user_id} - Event {self.event_id}>'
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "event_id": self.event_id,
+            "event_title": self.event.title if self.event else None,
+            "event_type": self.event.event_type if self.event else None,
+            "event_price": self.event.price if self.event else None,
+            "event_start_date": self.event.start_date.isoformat() if self.event and self.event.start_date else None,
+            "event_end_date": self.event.end_date.isoformat() if self.event and self.event.end_date else None,
+            "event_city": self.event.city if self.event else None,
+            "event_address": self.event.address if self.event else None,
+            "event_image": self.event.image_url if self.event else None,
+            "local_name": self.event.local.nombre if self.event and self.event.local else None,
+            "participants": self.participants,
+            "status": self.status,
+            "notes": self.notes,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+
 # TABLA PARA LISTAS PERSONALIZADAS DE USUARIOS
 class UserList(db.Model):
     __tablename__ = 'user_list'

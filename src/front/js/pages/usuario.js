@@ -14,6 +14,7 @@ export const Usuario = () => {
     actions.getFavorit();
     actions.getInformationCurrentMember();
     actions.getReservations();
+    actions.getEventReservations();
   }, []);
 
   const verReservas = () => {
@@ -89,6 +90,87 @@ export const Usuario = () => {
     }
   };
 
+  // Ver reservas de experiencias gastronómicas
+  const verReservasExperiencias = () => {
+    const confirmedReservations = store.eventReservations.filter(r => r.status === 'confirmed');
+    
+    if (!confirmedReservations || confirmedReservations.length === 0) {
+      Swal.fire({
+        title: "Sin reservas de experiencias",
+        text: "No tienes reservas de experiencias activas",
+        icon: "info",
+        confirmButtonColor: "#ffc843",
+      });
+      return;
+    }
+    
+    const reservasHTML = confirmedReservations.map((reserva) => {
+      const fechaInicio = new Date(reserva.event_start_date).toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      const tipoEvento = {
+        'cata': '🍷 Cata de Vinos',
+        'pack': '🎁 Pack Gastronómico',
+        'taller': '👨‍🍳 Taller de Cocina',
+        'degustacion': '🍽️ Degustación'
+      };
+      
+      return `
+        <div style="border: 2px solid #667eea; padding: 15px; margin: 15px 0; border-radius: 10px; background-color: #fff;">
+          <h4 style="color: #667eea; margin-bottom: 10px;">${reserva.event_title}</h4>
+          ${reserva.event_image ? `<img src="${reserva.event_image}" style="width: 100%; max-width: 300px; border-radius: 8px; margin: 10px 0;" />` : ''}
+          <p style="margin: 5px 0;"><strong>${tipoEvento[reserva.event_type] || reserva.event_type}</strong></p>
+          <p style="margin: 5px 0;"><strong>🏪 Local:</strong> ${reserva.local_name}</p>
+          <p style="margin: 5px 0;"><strong>📍 Ciudad:</strong> ${reserva.event_city}</p>
+          <p style="margin: 5px 0;"><strong>📅 Fecha:</strong> ${fechaInicio}</p>
+          <p style="margin: 5px 0;"><strong>👥 Participantes:</strong> ${reserva.participants}</p>
+          <p style="margin: 5px 0;"><strong>💰 Precio:</strong> ${reserva.event_price}€</p>
+          ${reserva.notes ? `<p style="margin: 5px 0;"><strong>📝 Notas:</strong> ${reserva.notes}</p>` : ''}
+          <button 
+            onclick="cancelEventReservation(${reserva.id})"
+            style="background-color: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;"
+          >
+            Cancelar Reserva
+          </button>
+        </div>
+      `;
+    }).join('');
+    
+    Swal.fire({
+      title: "Mis Reservas de Experiencias",
+      html: `<div style="max-height: 500px; overflow-y: auto;">${reservasHTML}</div>`,
+      width: '600px',
+      confirmButtonColor: "#667eea",
+      confirmButtonText: "Cerrar"
+    });
+  };
+
+  // Función global para cancelar reservas de experiencias
+  window.cancelEventReservation = async (reservationId) => {
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: "¿Quieres cancelar esta reserva de experiencia?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#667eea',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, cancelar',
+      cancelButtonText: 'No'
+    });
+    
+    if (result.isConfirmed) {
+      const success = await actions.cancelEventReservation(reservationId);
+      if (success) {
+        Swal.close();
+        verReservasExperiencias();
+      }
+    }
+  };
+
   return (
     <>
       {store.auth &&
@@ -131,6 +213,17 @@ export const Usuario = () => {
                   }}
                 >
                   Ver mis reservas ({store.reservations.filter(r => r.status === 'confirmed').length})
+                </button>
+                <button
+                  onClick={verReservasExperiencias}
+                  type="button"
+                  className=" btn  btn-sm h-50 m-3"
+                  style={{
+                    backgroundColor: "#667eea",
+                    color: "white",
+                  }}
+                >
+                  Ver experiencias ({store.eventReservations.filter(r => r.status === 'confirmed').length})
                 </button>
               </div>
               <div className="d-flex mx-auto">

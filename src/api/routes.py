@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Locales, Direccion, Reservation, Review, GastronomicEvent, Offer, UserList, ListItem
+from api.models import db, User, Locales, Direccion, Reservation, Review, GastronomicEvent, Offer, EventReservation, UserList, ListItem
 from api.utils import generate_sitemap, APIException
 import json
 import datetime
@@ -789,6 +789,113 @@ def create_offer():
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': 'Error creating offer', 'error': str(e)}), 500
+
+
+# ============================================
+# ENDPOINTS DE RESERVAS DE EXPERIENCIAS
+# ============================================
+
+@api.route('/event-reservations', methods=['GET'])
+@jwt_required()
+def get_user_event_reservations():
+    """Obtener todas las reservas de experiencias del usuario"""
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        reservations = EventReservation.query.filter_by(user_id=user.id).order_by(
+            EventReservation.created_at.desc()
+        ).all()
+        
+        return jsonify([reservation.serialize() for reservation in reservations]), 200
+    except Exception as e:
+        return jsonify({'message': 'Error fetching reservations', 'error': str(e)}), 500
+
+
+@api.route('/event-reservations', methods=['POST'])
+@jwt_required()
+def create_event_reservation():
+    """Crear una nueva reserva de experiencia"""
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        data = request.get_json()
+        event_id = data.get('event_id')
+        participants = data.get('participants', 1)
+        
+        # Verificar que el evento existe
+        event = GastronomicEvent.query.get(event_id)
+        if not event:
+            return jsonify({'message': 'Event not found'}), 404
+        
+        # Verificar disponibilidad
+        available_spots = event.max_participants - event.current_participants
+        if participants > available_spots:
+            return jsonify({
+                'message': 'Not enough spots available',
+                'available_spots': available_spots
+            }), 400
+        
+        # Crear reserva
+        reservation = EventReservation(
+            user_id=user.id,
+            event_id=event_id,
+            participants=participants,
+            notes=data.get('notes')
+        )
+        
+        # Actualizar participantes del evento
+        event.current_participants += participants
+        
+        db.session.add(reservation)
+        db.session.commit()
+        
+        return jsonify(reservation.serialize()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Error creating reservation', 'error': str(e)}), 500
+
+
+@api.route('/event-reservations/<int:reservation_id>', methods=['DELETE'])
+@jwt_required()
+def cancel_event_reservation(reservation_id):
+    """Cancelar una reserva de experiencia"""
+    try:
+        email = get_jwt_identity()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        reservation = EventReservation.query.get(reservation_id)
+        
+        if not reservation:
+            return jsonify({'message': 'Reservation not found'}), 404
+        
+        if reservation.user_id != user.id:
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        # Devolver los spots al evento
+        event = reservation.event
+        if event:
+            event.current_participants -= reservation.participants
+        
+        # Cambiar estado a cancelado en lugar de eliminar
+        reservation.status = 'cancelled'
+        
+        db.session.commit()
+        
+        return jsonify({'message': 'Reservation cancelled successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Error cancelling reservation', 'error': str(e)}), 500
 
 
 # ============================================

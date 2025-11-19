@@ -24,6 +24,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       profiles: [],
       likes: [],
       reservations: [],
+      eventReservations: [],
       restaurante: [],
       went: [],
       profileRestaurante: [],
@@ -289,6 +290,126 @@ const getState = ({ getStore, getActions, setStore }) => {
           return false;
         }
       },
+
+      // ============================================
+      // RESERVAS DE EXPERIENCIAS GASTRONÓMICAS
+      // ============================================
+
+      getEventReservations: async () => {
+        try {
+          const response = await fetch(
+            process.env.BACKEND_URL + "/api/event-reservations",
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            setStore({ eventReservations: data });
+          } else {
+            setStore({ eventReservations: [] });
+          }
+        } catch (err) {
+          console.error("Error fetching event reservations:", err);
+          setStore({ eventReservations: [] });
+        }
+      },
+
+      createEventReservation: async (eventId, participants, notes) => {
+        try {
+          const response = await fetch(
+            process.env.BACKEND_URL + "/api/event-reservations",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify({
+                event_id: eventId,
+                participants: participants,
+                notes: notes
+              }),
+            }
+          );
+          
+          if (response.ok) {
+            Swal.fire({
+              icon: 'success',
+              title: '¡Reserva confirmada!',
+              text: 'Tu reserva para la experiencia ha sido confirmada',
+              confirmButtonColor: '#667eea'
+            });
+            getActions().getEventReservations();
+            return true;
+          } else {
+            const error = await response.json();
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: error.message || 'No se pudo crear la reserva',
+              confirmButtonColor: '#667eea'
+            });
+            return false;
+          }
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'Error al crear la reserva',
+            confirmButtonColor: '#667eea'
+          });
+          return false;
+        }
+      },
+
+      cancelEventReservation: async (reservationId) => {
+        try {
+          const response = await fetch(
+            process.env.BACKEND_URL + "/api/event-reservations/" + reservationId,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          
+          if (response.ok) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Reserva cancelada',
+              text: 'La reserva de experiencia ha sido cancelada',
+              confirmButtonColor: '#667eea'
+            });
+            getActions().getEventReservations();
+            return true;
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'No se pudo cancelar la reserva',
+              confirmButtonColor: '#667eea'
+            });
+            return false;
+          }
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'Error al cancelar la reserva',
+            confirmButtonColor: '#667eea'
+          });
+          return false;
+        }
+      },
+
       addWent: (nombre) => {
         //Creamos la funcion para obtener el nombre con el Onclick
         const store = getStore(); //Obtenemos Store con "getStore"
