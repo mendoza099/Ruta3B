@@ -5,15 +5,13 @@ echo "=== Backend deps ==="
 pip install pipenv
 pipenv install --deploy --system
 
-# ✅ CLAVE: que Python encuentre /src/api
+# Para que 'from api...' funcione (api está dentro de src/)
 export PYTHONPATH="$(pwd)/src"
 
 echo "=== DB migrations (alembic/flask-migrate) ==="
-cd src
-# Si ya tienes FLASK_APP en Render, esto va; si no, lo fijamos aquí también:
-export FLASK_APP=app.py
+# migrations/ está en la raíz, así que ejecutamos desde aquí
+export FLASK_APP=src/app.py
 flask db upgrade
-cd ..
 
 echo "=== Frontend build ==="
 cd front
@@ -25,7 +23,6 @@ echo "=== Copy frontend build to public/ ==="
 rm -rf public
 mkdir -p public
 
-# ✅ Soporta build/ o dist/ (por si usas CRA o Vite)
 if [ -d "front/build" ]; then
   cp -R front/build/* public/
 elif [ -d "front/dist" ]; then
