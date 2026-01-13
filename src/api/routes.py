@@ -20,6 +20,21 @@ from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
 api = Blueprint('api', __name__)
 
+@api.route("/", methods=["GET"])
+def api_root():
+    return jsonify({
+        "status": "ok",
+        "message": "Ruta3B API running",
+        "endpoints": [
+            "/api/restaurantes",
+            "/api/login",
+            "/api/user",
+            "/api/offers",
+            "/api/gastronomic-events"
+        ]
+    }), 200
+
+
 @api.route('/login-required', methods=['GET'])
 def login_required_message():
     return jsonify({'message': 'Authentication required to access admin panel'}), 401

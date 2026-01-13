@@ -112,6 +112,9 @@ app.register_blueprint(api, url_prefix="/api")
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}, 200
 
 # ------------------------------------------------------------
 # ROUTES
