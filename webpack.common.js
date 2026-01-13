@@ -49,8 +49,11 @@ module.exports = {
     }),
 
     // ✅ CAMBIO CLAVE: NO safe, solo systemvars
-    new Dotenv({
-      systemvars: true
-    })
+  new Dotenv({
+  systemvars: true,
+  safe: false,
+  allowEmptyValues: true
+})
+
   ]
 };
