@@ -6,9 +6,13 @@ const common = require('./webpack.common.js');
 
 const port = 3000;
 let publicUrl = `ws://localhost:${port}/ws`;
+// Support both Gitpod Classic and Gitpod Flex
 if(process.env.GITPOD_WORKSPACE_URL){
   const [schema, host] = process.env.GITPOD_WORKSPACE_URL.split('://');
   publicUrl = `wss://${port}-${host}/ws`;
+} else {
+  // For Gitpod Flex or other environments, use auto detection
+  publicUrl = 'auto://0.0.0.0:0/ws';
 }
 
 module.exports = merge(common, {

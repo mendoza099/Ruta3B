@@ -6,7 +6,7 @@ from api.models import db, User, Locales, Direccion, Reservation, Review, Gastro
 from api.utils import generate_sitemap, APIException
 import json
 import datetime
-from datetime import datetime as dt
+from datetime import datetime as dt, timedelta
 
 # # flask jwt paquete de instalacion
 from flask_jwt_extended import create_access_token
@@ -109,14 +109,43 @@ def protected():
     return jsonify(user.serialize()), 200
 
 
-@api.route("/profile-restaurante", methods=["GET"])
+@api.route("/profile-restaurante", methods=["GET", "PUT"])
 @jwt_required()
 def profile_protected():
-    # Access the identity of the current user with get_jwt_identity
     current_local = get_jwt_identity()
     local = Locales.query.filter_by(email=current_local).first()
     
-    return jsonify(local.serialize()), 200
+    if not local:
+        return jsonify({'message': 'Restaurant not found'}), 404
+    
+    if request.method == "GET":
+        return jsonify(local.serialize()), 200
+    
+    # PUT - Actualizar perfil
+    if request.method == "PUT":
+        try:
+            data = request.get_json()
+            
+            if 'descripcion' in data:
+                local.descripcion = data['descripcion']
+            if 'precio' in data:
+                local.precio = int(data['precio']) if data['precio'] else local.precio
+            if 'direccion' in data:
+                local.direccion = data['direccion']
+            if 'ciudad' in data:
+                local.ciudad = data['ciudad']
+            if 'codigo_postal' in data:
+                local.codigo_postal = data['codigo_postal']
+            if 'foto' in data:
+                local.foto = data['foto']
+            if 'tipo_local' in data:
+                local.tipo_local = data['tipo_local']
+            
+            db.session.commit()
+            return jsonify({'message': 'Profile updated successfully', 'local': local.serialize()}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'message': 'Error updating profile', 'error': str(e)}), 500
 
 
 
@@ -1077,51 +1106,129 @@ def reorder_list_items(list_id):
 def get_restaurant_dashboard():
     """Obtener estadísticas completas del restaurante"""
     try:
+        from collections import defaultdict
+        from sqlalchemy import func
+        
+        # Filtro de tiempo (días hacia atrás)
+        period = request.args.get('period', '180')  # default 6 meses
+        try:
+            days_back = int(period)
+        except:
+            days_back = 180
+        
+        date_filter = dt.now() - timedelta(days=days_back)
+        
         email = get_jwt_identity()
         local = Locales.query.filter_by(email=email).first()
         
         if not local:
             return jsonify({'message': 'Restaurant not found'}), 404
         
-        # Reservas
-        reservations = Reservation.query.filter_by(local_id=local.id).all()
-        total_reservations = len(reservations)
+        # Reservas (todas para totales)
+        all_reservations = Reservation.query.filter_by(local_id=local.id).all()
+        total_reservations = len(all_reservations)
+        confirmed_reservations = len([r for r in all_reservations if r.status == 'confirmed'])
+        cancelled_reservations = len([r for r in all_reservations if r.status == 'cancelled'])
+        
+        # Reservas filtradas por período para gráficos
+        reservations = [r for r in all_reservations if r.created_at and r.created_at >= date_filter]
         
         # Reservas por mes (últimos 6 meses)
-        from collections import defaultdict
         reservations_by_month = defaultdict(int)
+        people_by_month = defaultdict(int)
         for res in reservations:
             if res.date:
                 month_key = res.date.strftime('%Y-%m')
                 reservations_by_month[month_key] += 1
+                people_by_month[month_key] += res.people or 0
+        
+        # Ordenar y tomar últimos 6 meses
+        sorted_months = sorted(reservations_by_month.items())[-6:]
+        sorted_people = sorted(people_by_month.items())[-6:]
+        
+        # Total de personas atendidas
+        total_people = sum(r.people or 0 for r in reservations if r.status == 'confirmed')
         
         # Reviews
         reviews = Review.query.filter_by(local_id=local.id).all()
         total_reviews = len(reviews)
         avg_rating = sum(r.rating for r in reviews) / total_reviews if total_reviews > 0 else 0
         
+        # Distribución de ratings
+        rating_distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        for r in reviews:
+            if r.rating in rating_distribution:
+                rating_distribution[r.rating] += 1
+        
         # Ofertas
         offers = Offer.query.filter_by(local_id=local.id).all()
         active_offers = [o for o in offers if o.is_active and o.end_date >= dt.now()]
+        total_offer_uses = sum(o.current_uses for o in offers)
         
         # Eventos
         events = GastronomicEvent.query.filter_by(local_id=local.id).all()
         active_events = [e for e in events if e.is_active and e.end_date >= dt.now()]
+        total_event_participants = sum(e.current_participants for e in events)
         
-        # Favoritos (aproximación)
-        favorites_count = len(local.favoritos) if hasattr(local, 'favoritos') else 0
+        # Favoritos - contar usuarios que tienen este local en favoritos
+        favorites_count = db.session.query(func.count()).select_from(User).join(
+            User.localesfav
+        ).filter(Locales.id == local.id).scalar() or 0
+        
+        # Visitas estimadas (basado en reservas + reviews + favoritos)
+        estimated_visits = total_reservations * 2 + total_reviews * 3 + favorites_count
+        
+        # Tendencia de reservas (comparar último mes con anterior)
+        if len(sorted_months) >= 2:
+            last_month = sorted_months[-1][1]
+            prev_month = sorted_months[-2][1]
+            trend = ((last_month - prev_month) / prev_month * 100) if prev_month > 0 else 0
+        else:
+            trend = 0
         
         return jsonify({
             'restaurant_info': {
                 'id': local.id,
                 'name': local.nombre,
+                'email': local.email,
                 'city': local.ciudad,
-                'type': local.tipo_local
+                'address': local.direccion,
+                'postal_code': local.codigo_postal,
+                'type': local.tipo_local,
+                'description': local.descripcion,
+                'price': local.precio,
+                'photo': local.foto,
+                'latitude': local.latitud,
+                'longitude': local.longitud
+            },
+            'stats': {
+                'total_reservations': total_reservations,
+                'confirmed_reservations': confirmed_reservations,
+                'cancelled_reservations': cancelled_reservations,
+                'total_people_served': total_people,
+                'total_reviews': total_reviews,
+                'average_rating': round(avg_rating, 1),
+                'favorites_count': favorites_count,
+                'estimated_profile_visits': estimated_visits,
+                'reservation_trend': round(trend, 1)
+            },
+            'charts': {
+                'reservations_by_month': {
+                    'labels': [m[0] for m in sorted_months],
+                    'data': [m[1] for m in sorted_months]
+                },
+                'people_by_month': {
+                    'labels': [m[0] for m in sorted_people],
+                    'data': [m[1] for m in sorted_people]
+                },
+                'rating_distribution': {
+                    'labels': ['1 ⭐', '2 ⭐', '3 ⭐', '4 ⭐', '5 ⭐'],
+                    'data': [rating_distribution[i] for i in range(1, 6)]
+                }
             },
             'reservations': {
                 'total': total_reservations,
-                'by_month': dict(sorted(reservations_by_month.items())[-6:]),
-                'recent': [r.serialize() for r in sorted(reservations, key=lambda x: x.date, reverse=True)[:5]]
+                'recent': [r.serialize() for r in sorted(reservations, key=lambda x: x.created_at or dt.min, reverse=True)[:5]]
             },
             'reviews': {
                 'total': total_reviews,
@@ -1131,18 +1238,18 @@ def get_restaurant_dashboard():
             'offers': {
                 'total': len(offers),
                 'active': len(active_offers),
+                'total_uses': total_offer_uses,
                 'list': [o.serialize() for o in active_offers]
             },
             'events': {
                 'total': len(events),
                 'active': len(active_events),
+                'total_participants': total_event_participants,
                 'list': [e.serialize() for e in active_events]
-            },
-            'engagement': {
-                'favorites': favorites_count,
-                'total_reviews': total_reviews
             }
         }), 200
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'message': 'Error fetching dashboard', 'error': str(e)}), 500

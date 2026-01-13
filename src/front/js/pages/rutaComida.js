@@ -13,16 +13,41 @@ export const RutaComida = ({ nombre, descripcion, id, tipo_local }) => {
   const [time, setTime] = useState("");
   const [people, setPeople] = useState(2);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [restaurant, setRestaurant] = useState(null);
 
   const { theid } = useParams();
 
-  // Buscar restaurante por ID, no por índice
-  const restaurant = store.restaurantes.find(r => r.id === parseInt(theid));
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await actions.getRestaurantes();
+      // Solo cargar datos de usuario si está logueado
+      if (localStorage.getItem("token")) {
+        actions.getInformationCurrentMember();
+        actions.getFavorit();
+      }
+      setLoading(false);
+    };
+    loadData();
+  }, []);
+
+  // Buscar restaurante cuando se carguen los datos
+  useEffect(() => {
+    if (store.restaurantes && store.restaurantes.length > 0) {
+      const found = store.restaurantes.find(r => r.id === parseInt(theid));
+      setRestaurant(found);
+      setLoading(false);
+    }
+  }, [store.restaurantes, theid]);
 
   // Verificar si es favorito
   useEffect(() => {
-    if (restaurant && store.likes) {
+    if (restaurant && store.likes && Array.isArray(store.likes)) {
       setIsFavorite(store.likes.some(fav => fav.id === restaurant.id));
+    } else {
+      setIsFavorite(false);
     }
   }, [restaurant, store.likes]);
 
@@ -63,12 +88,6 @@ export const RutaComida = ({ nombre, descripcion, id, tipo_local }) => {
     }
   };
 
-  useEffect(() => {
-    actions.getInformationCurrentMember();
-    actions.getRestaurantes();
-    actions.getFavorit();
-  }, []);
-
   const toggleFavorite = async () => {
     if (!restaurant) return;
     
@@ -85,10 +104,26 @@ export const RutaComida = ({ nombre, descripcion, id, tipo_local }) => {
     return "€".repeat(precio);
   };
 
+  if (loading) {
+    return (
+      <div className="container text-center mt-5" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="spinner-border text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+        <h3 style={{ color: '#667eea' }}>Cargando restaurante...</h3>
+      </div>
+    );
+  }
+
   if (!restaurant) {
     return (
-      <div className="container text-center mt-5">
-        <h3>Cargando...</h3>
+      <div className="container text-center mt-5" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <span style={{ fontSize: '4rem' }}>🍽️</span>
+        <h3 className="mt-3">Restaurante no encontrado</h3>
+        <p className="text-muted">El restaurante que buscas no existe o ha sido eliminado.</p>
+        <Link to="/restaurantes" className="btn mt-3" style={{ backgroundColor: '#667eea', color: 'white', borderRadius: '10px', padding: '0.75rem 2rem' }}>
+          Ver todos los restaurantes
+        </Link>
       </div>
     );
   }

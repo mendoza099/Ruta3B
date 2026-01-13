@@ -1,179 +1,165 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Context } from "../store/appContext";
-import { Link, useNavigate } from "react-router-dom";
-import { Navigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import "../../styles/forms.css";
 
 const RegistroUsuario = () => {
-  const [newName, setNewName] = useState("");
-  const [newApellido, setNewApellido] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMatch, setPasswordMatch] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const { store, actions } = useContext(Context);
   const navigate = useNavigate();
 
-  /***********************Verificación de contraseña************************ */
-  const [cPassword, setCPassword] = useState("");
-  const [showErrorMessage, setShowErrorMessage] = useState(false);
-  const [cPasswordClass, setCPasswordClass] = useState("form-control");
-  const [isCPasswordDirty, setIsCPasswordDirty] = useState(false);
-
   useEffect(() => {
-    if (isCPasswordDirty) {
-      if (newPassword === cPassword) {
-        setShowErrorMessage(false);
-        setCPasswordClass("form-control is-valid");
-      } else {
-        setShowErrorMessage(true);
-        setCPasswordClass("form-control is-invalid");
-      }
+    if (confirmPassword) {
+      setPasswordMatch(password === confirmPassword);
     }
-  }, [cPassword]);
+  }, [password, confirmPassword]);
 
-  const handleCPassword = (e) => {
-    setCPassword(e.target.value);
-    setIsCPasswordDirty(true);
-  };
-  /************************************************ */
-
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   // if (email)
-  //   actions.RegistroLocales(newNameLocal,newEmail,newPassword,typeLocal,newDescripcion);
-  //   navigate("/login");
-  //   {
-  //     Swal.fire("Buen trabajo!", "Te has registrado correctamente!", "success");
-  //   }
-  // };
-
-  const handleSubmit2 = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    actions.registroUsuario(newName, newApellido, newEmail, newPassword);
-    navigate("/login");
-    {
+    
+    if (password !== confirmPassword) {
       Swal.fire({
-        title: "¡ENHORABUENA!",
-        html: "Ahora formas parte de la RUTA-3B'S",
-        width: 600,
-        padding: "3em",
-        color: "#000000",
-        confirmButtonColor: "#ffc843",
-        icon: "success",
-        backdrop: `
-          rgba(255, 200, 67,0.3)
-          
-        `,
+        icon: 'error',
+        title: 'Error',
+        text: 'Las contraseñas no coinciden',
+        confirmButtonColor: '#667eea'
       });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      await actions.registroUsuario(nombre, apellido, email, password);
+      
+      Swal.fire({
+        icon: 'success',
+        title: '¡Bienvenido a Ruta 3B!',
+        html: `
+          <p style="color: #718096;">Tu cuenta ha sido creada correctamente.</p>
+          <p style="color: #718096; font-size: 0.9rem;">Ahora puedes descubrir los mejores restaurantes: buenos, bonitos y baratos.</p>
+        `,
+        confirmButtonColor: '#667eea',
+        confirmButtonText: 'Iniciar Sesión'
+      }).then(() => {
+        navigate("/login");
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo crear la cuenta. Inténtalo de nuevo.',
+        confirmButtonColor: '#667eea'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  if (store.auth) {
+    return <Navigate to="/usuario" />;
+  }
 
   return (
-    <>
-      <div
-        className="container"
-        style={{
-          width: "700px",
-          marginTop: "2cm",
-          backgroundColor: "rgb(247, 230, 173)",
-          padding: "1cm",
-          marginBottom: "150px",
-          borderRadius: "15px",
-        }}
-      >
-        {store.auth ? (
-          <Navigate to="/login" />
-        ) : (
-          <form onSubmit={handleSubmit2}>
-            <div className="mb-3">
-              <label className="p-1 " htmlFor="">
-                Nombre
-              </label>
+    <div className="form-container">
+      <div className="form-card">
+        <div className="form-header">
+          <div className="form-header-icon">👤</div>
+          <h2>Crear Cuenta</h2>
+          <p>Únete a la comunidad Ruta 3B</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="form-body">
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Nombre</label>
               <input
                 type="text"
-                className="form-control"
-                aria-describedby="emailHelp"
-                onChange={(e) => setNewName(e.target.value)}
+                className="form-input"
+                placeholder="Tu nombre"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
                 required
               />
             </div>
-            <div className="mb-3">
-              <label className="p-1 " htmlFor="">
-                Apellido
-              </label>
+            
+            <div className="form-group">
+              <label className="form-label">Apellido</label>
               <input
                 type="text"
-                className="form-control"
-                aria-describedby="emailHelp"
-                onChange={(e) => setNewApellido(e.target.value)}
+                className="form-input"
+                placeholder="Tu apellido"
+                value={apellido}
+                onChange={(e) => setApellido(e.target.value)}
                 required
               />
             </div>
-            <div className="mb-3">
-              <label className="p-1 " htmlFor="">
-                Correo Electrónico
-              </label>
-              <input
-                type="email"
-                className="form-control"
-                aria-describedby="emailHelp"
-                onChange={(e) => setNewEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="p-1 " htmlFor="">
-                Contraseña
-              </label>
-              <input
-                type="password"
-                className="form-control"
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                value={newPassword}
-              />
-            </div>
-            <div className="mb-3">
-              <label className=" form-label" htmlFor="">
-                Repita su contraseña
-              </label>
-              <input
-                type="password"
-                className={cPasswordClass}
-                id="example4"
-                onChange={handleCPassword}
-                required
-              />
-            </div>
-            {showErrorMessage && isCPasswordDirty ? (
-              <div className="p-3"> Las contraseñas no coinciden </div>
-            ) : (
-              ""
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Correo Electrónico</label>
+            <input
+              type="email"
+              className="form-input"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Contraseña</label>
+            <input
+              type="password"
+              className="form-input"
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={6}
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Confirmar Contraseña</label>
+            <input
+              type="password"
+              className={`form-input ${confirmPassword ? (passwordMatch ? 'is-valid' : 'is-invalid') : ''}`}
+              placeholder="Repite tu contraseña"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+            {!passwordMatch && confirmPassword && (
+              <div className="form-error">
+                ⚠️ Las contraseñas no coinciden
+              </div>
             )}
-
-            <div className="text-center">
-              {showErrorMessage && isCPasswordDirty == true ? (
-                <button
-                  type="submit"
-                  className="disabled w-50 text-center btn"
-                  style={{ color: "black", backgroundColor: "white" }}
-                >
-                  Registrar
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  className="w-50 text-center btn"
-                  style={{ color: "black", backgroundColor: "white" }}
-                >
-                  Registrar
-                </button>
-              )}
-            </div>
-          </form>
-        )}
+          </div>
+          
+          <button 
+            type="submit" 
+            className="form-btn form-btn-primary"
+            disabled={isSubmitting || !passwordMatch}
+          >
+            {isSubmitting ? 'Creando cuenta...' : 'Crear Cuenta'}
+          </button>
+        </form>
+        
+        <div className="form-footer">
+          <p>¿Ya tienes cuenta? <Link to="/login">Inicia Sesión</Link></p>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

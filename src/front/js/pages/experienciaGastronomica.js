@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Context } from "../store/appContext";
 import "../../styles/experiencia.css";
 import Swal from "sweetalert2";
 
 export const ExperienciaGastronomica = () => {
+  const { store, actions } = useContext(Context);
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [selectedType, setSelectedType] = useState("todos");
@@ -85,7 +88,26 @@ export const ExperienciaGastronomica = () => {
     return diff;
   };
 
-  const handleReserveEvent = (event) => {
+  const handleReserveEvent = async (event) => {
+    // Verificar si el usuario está logueado
+    if (!store.auth) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Inicia sesión',
+        text: 'Debes iniciar sesión para reservar una experiencia',
+        showCancelButton: true,
+        confirmButtonColor: '#667eea',
+        cancelButtonColor: '#aaa',
+        confirmButtonText: 'Iniciar sesión',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login');
+        }
+      });
+      return;
+    }
+
     if (event.available_spots === 0) {
       Swal.fire({
         icon: 'warning',
@@ -96,29 +118,76 @@ export const ExperienciaGastronomica = () => {
       return;
     }
 
-    Swal.fire({
+    const { value: formValues } = await Swal.fire({
       title: `Reservar: ${event.title}`,
       html: `
-        <p><strong>Precio:</strong> ${event.price}€</p>
-        <p><strong>Fecha:</strong> ${formatDate(event.start_date)}</p>
-        <p><strong>Plazas disponibles:</strong> ${event.available_spots}</p>
+        <div style="text-align: left; margin-bottom: 15px;">
+          <p><strong>Precio:</strong> ${event.price}€ por persona</p>
+          <p><strong>Fecha:</strong> ${formatDate(event.start_date)}</p>
+          <p><strong>Lugar:</strong> ${event.address}, ${event.city}</p>
+          <p><strong>Plazas disponibles:</strong> ${event.available_spots}</p>
+        </div>
+        <div style="margin-top: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Número de participantes:</label>
+          <input type="number" id="swal-participants" class="swal2-input" min="1" max="${event.available_spots}" value="1" style="width: 100%;">
+        </div>
+        <div style="margin-top: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Notas (opcional):</label>
+          <textarea id="swal-notes" class="swal2-textarea" placeholder="Alergias, preferencias..." style="width: 100%;"></textarea>
+        </div>
       `,
-      icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#667eea',
       cancelButtonColor: '#f5576c',
-      confirmButtonText: 'Reservar',
-      cancelButtonText: 'Cancelar'
-    }).then((result) => {
-      if (result.isConfirmed) {
+      confirmButtonText: 'Confirmar Reserva',
+      cancelButtonText: 'Cancelar',
+      preConfirm: () => {
+        const participants = parseInt(document.getElementById('swal-participants').value);
+        const notes = document.getElementById('swal-notes').value;
+        
+        if (participants < 1 || participants > event.available_spots) {
+          Swal.showValidationMessage(`Selecciona entre 1 y ${event.available_spots} participantes`);
+          return false;
+        }
+        
+        return { participants, notes };
+      }
+    });
+
+    if (formValues) {
+      const success = await actions.createEventReservation(event.id, formValues.participants, formValues.notes);
+      
+      if (success) {
+        // Actualizar la lista de eventos
+        fetchEvents();
+        
         Swal.fire({
           icon: 'success',
           title: '¡Reserva confirmada!',
-          text: 'Recibirás un email con los detalles',
+          html: `
+            <p>Tu reserva para <strong>${event.title}</strong> ha sido confirmada.</p>
+            <p><strong>Participantes:</strong> ${formValues.participants}</p>
+            <p><strong>Total:</strong> ${(event.price * formValues.participants).toFixed(2)}€</p>
+            <p style="margin-top: 10px;">Puedes ver tus reservas en tu perfil.</p>
+          `,
+          confirmButtonColor: '#667eea',
+          confirmButtonText: 'Ver mi perfil',
+          showCancelButton: true,
+          cancelButtonText: 'Seguir explorando'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate('/usuario');
+          }
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo completar la reserva. Inténtalo de nuevo.',
           confirmButtonColor: '#667eea'
         });
       }
-    });
+    }
   };
 
   const cities = ["todas", ...new Set(events.map(e => e.city))].sort();

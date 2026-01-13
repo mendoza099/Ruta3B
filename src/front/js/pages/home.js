@@ -1,19 +1,27 @@
-import React, { StrictMode, useContext, useEffect } from "react";
+import React, { StrictMode, useContext, useEffect, useState } from "react";
 import { Context } from "../store/appContext";
 import "../../styles/home.css";
 import { CardHome } from "./cardHome.jsx";
 import { CardHome2 } from "./cardHome2.jsx";
 
 export const Home = () => {
-  const { store } = useContext(Context);
+  const { store, actions } = useContext(Context);
+  const [randomRestaurants, setRandomRestaurants] = useState([]);
 
-  // Seleccionar 4 restaurantes aleatorios
-  const getRandomRestaurants = () => {
-    const shuffled = [...store.restaurantes].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 4);
-  };
+  // Cargar restaurantes si no están cargados
+  useEffect(() => {
+    if (!store.restaurantes || store.restaurantes.length === 0) {
+      actions.getRestaurantes();
+    }
+  }, []);
 
-  const randomRestaurants = getRandomRestaurants();
+  // Seleccionar 4 restaurantes aleatorios cuando se carguen
+  useEffect(() => {
+    if (store.restaurantes && store.restaurantes.length > 0) {
+      const shuffled = [...store.restaurantes].sort(() => 0.5 - Math.random());
+      setRandomRestaurants(shuffled.slice(0, 4));
+    }
+  }, [store.restaurantes]);
 
   // Renderizar 4 restaurantes en grid 2x2
   const restaurantCards = randomRestaurants.map((item, index) => {
@@ -88,7 +96,16 @@ export const Home = () => {
       </div>
       <hr />
       <div className="home-restaurants-grid">
-        {restaurantCards}
+        {randomRestaurants.length > 0 ? (
+          restaurantCards
+        ) : (
+          <div className="text-center w-100 py-5">
+            <div className="spinner-border text-warning mb-3" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </div>
+            <p>Cargando restaurantes destacados...</p>
+          </div>
+        )}
       </div>
     </>
   );

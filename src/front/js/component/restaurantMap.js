@@ -58,7 +58,7 @@ const RestaurantMap = ({ latitud, longitud, nombre, direccion, ciudad }) => {
             left: 0,
             width: "100%",
             height: "100%",
-            border: "2px solid #ffc843",
+            border: "2px solid #667eea",
             borderRadius: "10px"
           }}
         ></iframe>
@@ -71,7 +71,7 @@ const RestaurantMap = ({ latitud, longitud, nombre, direccion, ciudad }) => {
           target="_blank"
           rel="noopener noreferrer"
           className="btn btn-sm"
-          style={{ backgroundColor: "#ffc843", color: "#000" }}
+          style={{ backgroundColor: "#667eea", color: "#000" }}
         >
           <i className="bi bi-map me-2"></i>
           Ver en Google Maps

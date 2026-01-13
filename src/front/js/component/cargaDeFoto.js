@@ -26,8 +26,8 @@ export const CargaDeFoto = () => {
           <h5>2do Paso:</h5>
           <button
             style={{
-              backgroundColor: "rgb(255, 200, 67)",
-              color: "black",
+              backgroundColor: "#667eea",
+              color: "white",
             }}
             className=" btn"
             variant="contained"
@@ -38,8 +38,8 @@ export const CargaDeFoto = () => {
           <h5>3r Paso:</h5>
           <button
             style={{
-              backgroundColor: "rgb(255, 200, 67)",
-              color: "black",
+              backgroundColor: "#667eea",
+              color: "white",
             }}
             className=" btn"
             onClick={(e) => {

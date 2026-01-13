@@ -1,265 +1,269 @@
-import React, { useState, useContext, useEffect, useRef } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { Context } from "../store/appContext";
-import { Link, useNavigate } from "react-router-dom";
-import { Navigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import "../../styles/forms.css";
 
 const RegistroDeLocales = () => {
-  const [newNameLocal, setNewNameLocal] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [newDescripcion, setNewDescripcion] = useState("");
-  const [newPago, setNewPago] = useState("");
-  const [typeLocal, setTypeLocal] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [tipoLocal, setTipoLocal] = useState("");
   const [direccion, setDireccion] = useState("");
   const [ciudad, setCiudad] = useState("");
   const [codigoPostal, setCodigoPostal] = useState("");
-  const navigate = useNavigate();
+  const [precio, setPrecio] = useState(2);
+  const [passwordMatch, setPasswordMatch] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const { store, actions } = useContext(Context);
-
-  /***********************Verificación de contraseña************************ */
-  const [cPassword, setCPassword] = useState("");
-  const [showErrorMessage, setShowErrorMessage] = useState(false);
-  const [cPasswordClass, setCPasswordClass] = useState("form-control");
-  const [isCPasswordDirty, setIsCPasswordDirty] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (isCPasswordDirty) {
-      if (newPassword === cPassword) {
-        setShowErrorMessage(false);
-        setCPasswordClass("form-control is-valid");
-      } else {
-        setShowErrorMessage(true);
-        setCPasswordClass("form-control is-invalid");
-      }
+    if (confirmPassword) {
+      setPasswordMatch(password === confirmPassword);
     }
-  }, [cPassword]);
+  }, [password, confirmPassword]);
 
-  const handleCPassword = (e) => {
-    setCPassword(e.target.value);
-    setIsCPasswordDirty(true);
-  };
-  /************************************************ */
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    actions.RegistroLocales(
-      newNameLocal,
-      newEmail,
-      newPassword,
-      typeLocal,
-      newDescripcion,
-      direccion,
-      ciudad,
-      codigoPostal
-    );
-    navigate("/login");
-    {
+    
+    if (password !== confirmPassword) {
       Swal.fire({
-        title: "¡ENHORABUENA!",
-        html: "Ahora formas parte de la RUTA-3B'S",
-        width: 600,
-        padding: "3em",
-        color: "#000000",
-        confirmButtonColor: "#ffc843",
-        icon: "success",
-        backdrop: `
-          rgba(255, 200, 67,0.3)
-          
-        `,
+        icon: 'error',
+        title: 'Error',
+        text: 'Las contraseñas no coinciden',
+        confirmButtonColor: '#667eea'
       });
+      return;
+    }
+
+    if (!tipoLocal) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tipo de local',
+        text: 'Por favor selecciona el tipo de local',
+        confirmButtonColor: '#667eea'
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      await actions.RegistroLocales(
+        nombre,
+        email,
+        password,
+        tipoLocal,
+        descripcion,
+        direccion,
+        ciudad,
+        codigoPostal
+      );
+      
+      Swal.fire({
+        icon: 'success',
+        title: '¡Bienvenido a Ruta 3B!',
+        html: `
+          <p style="color: #718096;">Tu local ha sido registrado correctamente.</p>
+          <p style="color: #718096; font-size: 0.9rem;">Ahora podrás gestionar tu perfil, recibir reservas y conectar con nuevos clientes.</p>
+        `,
+        confirmButtonColor: '#667eea',
+        confirmButtonText: 'Iniciar Sesión'
+      }).then(() => {
+        navigate("/login");
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo registrar el local. Inténtalo de nuevo.',
+        confirmButtonColor: '#667eea'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  if (store.auth) {
+    return <Navigate to="/restaurante" />;
+  }
+
+  const tiposLocal = [
+    { value: "Restaurante", icon: "🍽️" },
+    { value: "Bar", icon: "🍺" },
+    { value: "Cafetería", icon: "☕" },
+    { value: "Tapas", icon: "🥘" },
+    { value: "Pizzería", icon: "🍕" },
+    { value: "Marisquería", icon: "🦐" },
+    { value: "Asador", icon: "🥩" },
+    { value: "Gastrobar", icon: "🍸" }
+  ];
 
   return (
-    <div
-      className="container"
-      style={{
-        width: "700px",
-        marginTop: "2cm",
-        backgroundColor: "rgb(247, 230, 173)",
-        padding: "1cm",
-        marginBottom: "150px",
-        borderRadius: "15px",
-      }}
-    >
-      {store.auth ? (
-        <Navigate to="/restaurante" />
-      ) : (
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label className="p-1 " htmlFor="">
-              Nombre
-            </label>
+    <div className="form-container">
+      <div className="form-card wide">
+        <div className="form-header">
+          <div className="form-header-icon">🏪</div>
+          <h2>Registra tu Local</h2>
+          <p>Únete a la red de restaurantes Ruta 3B</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="form-body">
+          {/* Información básica */}
+          <div className="form-group">
+            <label className="form-label">Nombre del Local</label>
             <input
               type="text"
-              className="form-control"
-              id="example1"
-              aria-describedby="emailHelp"
-              onChange={(e) => setNewNameLocal(e.target.value)}
+              className="form-input"
+              placeholder="Ej: Restaurante La Abuela"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
               required
             />
           </div>
-          <div className="mb-3">
-            <label className="p-1 " htmlFor="">
-              Correo Electrónico
-            </label>
-            <input
-              type="email"
-              className="form-control"
-              id="example3"
-              aria-describedby="emailHelp"
-              onChange={(e) => setNewEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <label className="p-1 " htmlFor="">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              className="form-control"
-              id="example4"
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              value={newPassword}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="p-1 form-label" htmlFor="">
-              Repita su contraseña
-            </label>
-            <input
-              type="password"
-              className={cPasswordClass}
-              id="example4"
-              onChange={handleCPassword}
-              required
-            />
-          </div>
-          {showErrorMessage && isCPasswordDirty ? (
-            <div> Las contraseñas no coinciden </div>
-          ) : (
-            ""
-          )}
-          <div className="mb-3 content-center">
-            <h2>Que tipo de local deseas registrar?</h2>
-            <div className="m-auto w-50 p-1 text-center d-flex row input-group mb-3">
-              {/* <label className="p-1" htmlFor="">descripcion local</label>
-          <input
-            type="text"
-            className="form-control"
-            id="example4"
-              onChange={(e) => setNewTipoDeLocal(e.target.value)}
-          /> */}
-              <div className="p-1 form-check">
-                <input
-                  className="p-0  w-0 form-check-input"
-                  type="radio"
-                  name="flexRadioDefault"
-                  id="local-de-comida"
-                  onChange={() => {
-                    setTypeLocal("comida");
-                  }}
-                />
-                <label className="form-check-label" htmlFor="local-de-comida">
-                  Local de Comida
-                </label>
-              </div>
-              <div className="p-1 form-check">
-                <input
-                  className="form-check-input"
-                  type="radio"
-                  name="flexRadioDefault"
-                  id="local-de-bebida"
-                  onChange={() => {
-                    setTypeLocal("bebida");
-                  }}
-                />
-                <label className="form-check-label" htmlFor="local-de-bebida">
-                  Local de Bebida
-                </label>
-              </div>
+          
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Correo Electrónico</label>
+              <input
+                type="email"
+                className="form-input"
+                placeholder="contacto@tulocal.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
-          </div>
-          <div className="mb-3 content-center">
-            <label className="p-1" htmlFor="">
-              Describeme un poco tu local
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="example6"
-              aria-describedby="emailHelp"
-              onChange={(e) => setNewDescripcion(e.target.value)}
-              required
-            />
-          </div>
-
-          {/* Campos de dirección */}
-          <div className="mb-3">
-            <h5 className="mb-3">Ubicación del Local</h5>
-            <label className="p-1" htmlFor="">
-              Dirección completa
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Calle, número, piso..."
-              onChange={(e) => setDireccion(e.target.value)}
-              required
-            />
-          </div>
-          <div className="row mb-3">
-            <div className="col-md-8">
-              <label className="p-1" htmlFor="">
-                Ciudad
-              </label>
+            
+            <div className="form-group">
+              <label className="form-label">Ciudad</label>
               <input
                 type="text"
-                className="form-control"
+                className="form-input"
                 placeholder="Madrid, Barcelona..."
+                value={ciudad}
                 onChange={(e) => setCiudad(e.target.value)}
                 required
               />
             </div>
-            <div className="col-md-4">
-              <label className="p-1" htmlFor="">
-                Código Postal
-              </label>
+          </div>
+          
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Contraseña</label>
+              <input
+                type="password"
+                className="form-input"
+                placeholder="Mínimo 6 caracteres"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Confirmar Contraseña</label>
+              <input
+                type="password"
+                className={`form-input ${confirmPassword ? (passwordMatch ? 'is-valid' : 'is-invalid') : ''}`}
+                placeholder="Repite tu contraseña"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          
+          {!passwordMatch && confirmPassword && (
+            <div className="form-error" style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
+              ⚠️ Las contraseñas no coinciden
+            </div>
+          )}
+          
+          {/* Tipo de local */}
+          <div className="form-group">
+            <label className="form-label">Tipo de Local</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+              {tiposLocal.map((tipo) => (
+                <div
+                  key={tipo.value}
+                  onClick={() => setTipoLocal(tipo.value)}
+                  style={{
+                    padding: '0.75rem',
+                    border: `2px solid ${tipoLocal === tipo.value ? '#667eea' : '#e2e8f0'}`,
+                    borderRadius: '10px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    background: tipoLocal === tipo.value ? 'linear-gradient(135deg, #667eea, #764ba2)' : '#f8fafc',
+                    color: tipoLocal === tipo.value ? 'white' : '#4a5568',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  <div style={{ fontSize: '1.5rem' }}>{tipo.icon}</div>
+                  <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>{tipo.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Ubicación */}
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Dirección</label>
               <input
                 type="text"
-                className="form-control"
+                className="form-input"
+                placeholder="Calle, número..."
+                value={direccion}
+                onChange={(e) => setDireccion(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Código Postal</label>
+              <input
+                type="text"
+                className="form-input"
                 placeholder="28001"
+                value={codigoPostal}
                 onChange={(e) => setCodigoPostal(e.target.value)}
                 required
               />
             </div>
           </div>
-
-          <div className="text-center">
-            {showErrorMessage && isCPasswordDirty == true ? (
-              <button
-                type="submit"
-                className="disabled w-50 text-center btn"
-                style={{ color: "black", backgroundColor: "white" }}
-              >
-                Registrar
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="w-50 text-center btn"
-                style={{ color: "black", backgroundColor: "white" }}
-              >
-                Registrar
-              </button>
-            )}
+          
+          {/* Descripción */}
+          <div className="form-group">
+            <label className="form-label">Descripción del Local</label>
+            <textarea
+              className="form-input form-textarea"
+              placeholder="Cuéntanos qué hace especial a tu local: tipo de cocina, ambiente, especialidades..."
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              rows={3}
+              required
+            />
           </div>
+          
+          <button 
+            type="submit" 
+            className="form-btn form-btn-primary"
+            disabled={isSubmitting || !passwordMatch}
+          >
+            {isSubmitting ? 'Registrando local...' : 'Registrar Local'}
+          </button>
         </form>
-      )}
+        
+        <div className="form-footer">
+          <p>¿Ya tienes cuenta? <Link to="/login">Inicia Sesión</Link></p>
+        </div>
+      </div>
     </div>
   );
 };

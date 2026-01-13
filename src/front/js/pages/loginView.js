@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Navigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { Context } from "../store/appContext";
 import Swal from "sweetalert2";
+import "../../styles/forms.css";
 
 export const LoginView = () => {
   const { store, actions } = useContext(Context);
@@ -14,14 +14,12 @@ export const LoginView = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validación básica
     if (!email || !password) {
       Swal.fire({
         title: "Campos incompletos",
         text: "Por favor, completa todos los campos",
         icon: "warning",
-        confirmButtonColor: "#ffc843",
-        backdrop: `rgba(255, 200, 67, 0.3)`
+        confirmButtonColor: "#667eea"
       });
       return;
     }
@@ -32,19 +30,16 @@ export const LoginView = () => {
       const result = await actions.login(email, password);
       
       if (result.success) {
-        // Login exitoso
         Swal.fire({
           title: "¡Bienvenido!",
           html: result.isRestaurant 
             ? "Accediendo a tu panel de restaurante..." 
-            : "Accediendo a tu perfil de usuario...",
+            : "Accediendo a tu perfil...",
           icon: "success",
           timer: 1500,
           showConfirmButton: false,
-          confirmButtonColor: "#ffc843",
-          backdrop: `rgba(255, 200, 67, 0.3)`
+          confirmButtonColor: "#667eea"
         }).then(() => {
-          // Navegar después de mostrar el mensaje
           if (result.isRestaurant) {
             navigate("/restaurante", { replace: true });
           } else {
@@ -52,86 +47,78 @@ export const LoginView = () => {
           }
         });
       } else {
-        // Error en el login
         Swal.fire({
           title: "Error al iniciar sesión",
           text: result.message || "Credenciales incorrectas",
           icon: "error",
-          confirmButtonColor: "#ffc843",
-          backdrop: `rgba(255, 200, 67, 0.3)`
+          confirmButtonColor: "#667eea"
         });
       }
     } catch (error) {
-      console.error("Error inesperado:", error);
       Swal.fire({
         title: "Error",
         text: "Ocurrió un error inesperado. Por favor, intenta de nuevo.",
         icon: "error",
-        confirmButtonColor: "#ffc843",
-        backdrop: `rgba(255, 200, 67, 0.3)`
+        confirmButtonColor: "#667eea"
       });
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (store.auth) {
+    return <Navigate to="/" />;
+  }
+
   return (
-    <div className="container text-center">
-      <form
-        style={{
-          backgroundColor: "rgb(255, 200, 67)",
-          padding: "18px",
-          borderRadius: "10px",
-        }}
-        className="mt-5 h-50 w-50 m-auto"
-        onSubmit={handleSubmit}
-      >
-        <div className="mb-3">
-          <h6 className="mb-3 text-start">
-            Introduce tu cuenta de correo electrónico
-          </h6>
-          <input
-            onChange={(e) => setEmail(e.target.value)}
-            value={email}
-            type="email"
-            className="form-control"
-            aria-describedby="emailHelp"
-            placeholder="ejemplo@correo.com"
-            disabled={isLoading}
-            required
-          />
+    <div className="form-container">
+      <div className="form-card">
+        <div className="form-header">
+          <div className="form-header-icon">🔐</div>
+          <h2>Iniciar Sesión</h2>
+          <p>Accede a tu cuenta de Ruta 3B</p>
         </div>
-        <div className="mb-3">
-          <h6 className="mb-3 text-start">Introduce tu contraseña</h6>
-          <input
-            onChange={(e) => setPassword(e.target.value)}
-            value={password}
-            type="password"
-            className="form-control"
-            placeholder="••••••••"
-            disabled={isLoading}
-            required
-          />
-        </div>
-        <div className="union d-flex">
-          <button
-            style={{ backgroundColor: "white" }}
-            type="submit"
-            className="m-auto btn"
+        
+        <form onSubmit={handleSubmit} className="form-body">
+          <div className="form-group">
+            <label className="form-label">Correo Electrónico</label>
+            <input
+              type="email"
+              className="form-input"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Contraseña</label>
+            <input
+              type="password"
+              className="form-input"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              required
+            />
+          </div>
+          
+          <button 
+            type="submit" 
+            className="form-btn form-btn-primary"
             disabled={isLoading}
           >
-            {isLoading ? "Iniciando sesión..." : "Entrar"}
+            {isLoading ? 'Iniciando sesión...' : 'Entrar'}
           </button>
+        </form>
+        
+        <div className="form-footer">
+          <p>¿No tienes cuenta? <Link to="/seleccion-registro">Regístrate</Link></p>
         </div>
-        <div className="mt-3">
-          <small>
-            ¿No tienes cuenta?{" "}
-            <Link to="/seleccion-registro" style={{ color: "#000" }}>
-              Regístrate aquí
-            </Link>
-          </small>
-        </div>
-      </form>
+      </div>
     </div>
   );
 };

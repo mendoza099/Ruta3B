@@ -52,7 +52,7 @@ export const Reviews = ({ localId }) => {
         title: "Inicia sesión",
         text: "Debes iniciar sesión para dejar una reseña",
         icon: "warning",
-        confirmButtonColor: "#ffc843",
+        confirmButtonColor: "#667eea",
         backdrop: `rgba(255, 200, 67, 0.3)`,
       });
       return;
@@ -63,7 +63,7 @@ export const Reviews = ({ localId }) => {
         title: "Comentario muy corto",
         text: "El comentario debe tener al menos 10 caracteres",
         icon: "warning",
-        confirmButtonColor: "#ffc843",
+        confirmButtonColor: "#667eea",
         backdrop: `rgba(255, 200, 67, 0.3)`,
       });
       return;
@@ -94,7 +94,7 @@ export const Reviews = ({ localId }) => {
           icon: "success",
           timer: 2000,
           showConfirmButton: false,
-          confirmButtonColor: "#ffc843",
+          confirmButtonColor: "#667eea",
           backdrop: `rgba(255, 200, 67, 0.3)`,
         });
         setComment("");
@@ -106,7 +106,7 @@ export const Reviews = ({ localId }) => {
           title: "Error",
           text: data.message || "No se pudo publicar la reseña",
           icon: "error",
-          confirmButtonColor: "#ffc843",
+          confirmButtonColor: "#667eea",
           backdrop: `rgba(255, 200, 67, 0.3)`,
         });
       }
@@ -116,7 +116,7 @@ export const Reviews = ({ localId }) => {
         title: "Error",
         text: "Error de conexión. Intenta de nuevo.",
         icon: "error",
-        confirmButtonColor: "#ffc843",
+        confirmButtonColor: "#667eea",
         backdrop: `rgba(255, 200, 67, 0.3)`,
       });
     } finally {
@@ -131,7 +131,7 @@ export const Reviews = ({ localId }) => {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      cancelButtonColor: "#ffc843",
+      cancelButtonColor: "#667eea",
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
       backdrop: `rgba(255, 200, 67, 0.3)`,
@@ -156,7 +156,7 @@ export const Reviews = ({ localId }) => {
             icon: "success",
             timer: 2000,
             showConfirmButton: false,
-            confirmButtonColor: "#ffc843",
+            confirmButtonColor: "#667eea",
             backdrop: `rgba(255, 200, 67, 0.3)`,
           });
           loadReviews();
@@ -181,7 +181,7 @@ export const Reviews = ({ localId }) => {
           style={{
             cursor: interactive ? "pointer" : "default",
             fontSize: interactive ? "2rem" : "1.2rem",
-            color: isFilled ? "#ffc843" : "#ddd",
+            color: isFilled ? "#667eea" : "#ddd",
             transition: "color 0.2s",
           }}
           onClick={() => interactive && setRating(starValue)}
@@ -244,7 +244,7 @@ export const Reviews = ({ localId }) => {
                                   ? (stats.ratings[star] / stats.total) * 100
                                   : 0
                               }%`,
-                              backgroundColor: "#ffc843",
+                              backgroundColor: "#667eea",
                             }}
                           ></div>
                         </div>

@@ -31,7 +31,7 @@ export const EditInfo = () => {
           <form action="" onSubmit={editInfo}>
             <div
               style={{
-                backgroundColor: "rgb(255, 200, 67)",
+                backgroundColor: "#667eea",
                 padding: "6rem",
               }}
               className="w-50 container py-4 pt-2 row w-25 m-auto text-center"
@@ -63,8 +63,8 @@ export const EditInfo = () => {
                 onClick={() => window.location.reload()}
                 type="submit"
                 style={{
-                  backgroundColor: "rgb(255, 200, 67)",
-                  color: "black",
+                  backgroundColor: "#667eea",
+                  color: "white",
                 }}
                 className="mt-1 btn"
               >
@@ -77,8 +77,8 @@ export const EditInfo = () => {
               type="button"
               className="btn  btn-sm h-50 m-3"
               style={{
-                backgroundColor: "rgb(255, 200, 67)",
-                color: "black",
+                backgroundColor: "#667eea",
+                color: "white",
               }}
               to="/restaurante"
             >
@@ -93,8 +93,8 @@ export const EditInfo = () => {
             type="button"
             className="btn  btn-sm h-50 m-3"
             style={{
-              backgroundColor: "rgb(255, 200, 67)",
-              color: "black",
+              backgroundColor: "#667eea",
+              color: "white",
             }}
           >
             <Link className=" button-err" to="/">

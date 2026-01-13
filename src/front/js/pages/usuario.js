@@ -1,38 +1,48 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Context } from "../store/appContext";
 import { Link } from "react-router-dom";
-import CardHome from "./../pages/cardHome.jsx";
-import { CarruselCard } from "../component/carruserCard";
 import Swal from "sweetalert2";
-import "../../styles/user.css";
-import "../../styles/loginError.css";
+import "../../styles/userProfile.css";
 
 export const Usuario = () => {
   const { store, actions } = useContext(Context);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    actions.getFavorit();
-    actions.getInformationCurrentMember();
-    actions.getReservations();
-    actions.getEventReservations();
-  }, []);
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([
+        actions.getFavorit(),
+        actions.getInformationCurrentMember(),
+        actions.getReservations(),
+        actions.getEventReservations()
+      ]);
+      setLoading(false);
+    };
+    
+    if (store.auth && localStorage.getItem("esUsuario") === "true") {
+      loadData();
+    } else {
+      setLoading(false);
+    }
+  }, [store.auth]);
+
+  const confirmedReservations = (store.reservations || []).filter(r => r.status !== 'cancelled');
+  const confirmedExperiences = (store.eventReservations || []).filter(r => r.status !== 'cancelled');
+  const favorites = store.likes || [];
 
   const verReservas = () => {
-    // Filtrar solo reservas confirmadas
-    const confirmedReservations = store.reservations.filter(r => r.status === 'confirmed');
-    
-    if (!confirmedReservations || confirmedReservations.length === 0) {
+    if (confirmedReservations.length === 0) {
       Swal.fire({
         title: "Sin reservas",
         text: "No tienes reservas activas en este momento",
         icon: "info",
-        confirmButtonColor: "#ffc843",
+        confirmButtonColor: "#667eea",
       });
       return;
     }
     
-    // Crear HTML con todas las reservas
-    const reservasHTML = confirmedReservations.map((reserva, index) => {
+    const reservasHTML = confirmedReservations.map((reserva) => {
       const fecha = new Date(reserva.date).toLocaleDateString('es-ES', {
         weekday: 'long',
         year: 'numeric',
@@ -41,17 +51,19 @@ export const Usuario = () => {
       });
       
       return `
-        <div style="border: 2px solid #ffc843; padding: 15px; margin: 15px 0; border-radius: 10px; background-color: #fff;">
-          <h4 style="color: #000; margin-bottom: 10px;">${reserva.local_name}</h4>
-          <img src="${reserva.local_foto}" style="width: 100%; max-width: 300px; border-radius: 8px; margin: 10px 0;" />
-          <p style="margin: 5px 0;"><strong>📅 Fecha:</strong> ${fecha}</p>
-          ${reserva.time ? `<p style="margin: 5px 0;"><strong>🕐 Hora:</strong> ${reserva.time}</p>` : ''}
-          <p style="margin: 5px 0;"><strong>👥 Personas:</strong> ${reserva.people}</p>
-          ${reserva.notes ? `<p style="margin: 5px 0;"><strong>📝 Notas:</strong> ${reserva.notes}</p>` : ''}
+        <div style="border: 2px solid #667eea; padding: 15px; margin: 15px 0; border-radius: 12px; background: linear-gradient(135deg, #f8fafc, #edf2f7);">
+          <div style="display: flex; gap: 15px; align-items: center;">
+            <img src="${reserva.local_foto}" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover;" />
+            <div style="flex: 1; text-align: left;">
+              <h4 style="color: #2d3748; margin: 0 0 5px 0; font-size: 1.1rem;">${reserva.local_name}</h4>
+              <p style="margin: 3px 0; color: #718096; font-size: 0.9rem;">📅 ${fecha}</p>
+              ${reserva.time ? `<p style="margin: 3px 0; color: #718096; font-size: 0.9rem;">🕐 ${reserva.time}</p>` : ''}
+              <p style="margin: 3px 0; color: #718096; font-size: 0.9rem;">👥 ${reserva.people} personas</p>
+            </div>
+          </div>
           <button 
             onclick="window.cancelReservation(${reserva.id})" 
-            class="btn btn-danger btn-sm mt-2"
-            style="background-color: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;"
+            style="width: 100%; margin-top: 10px; background: linear-gradient(135deg, #fc8181, #f56565); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600;"
           >
             Cancelar Reserva
           </button>
@@ -60,23 +72,22 @@ export const Usuario = () => {
     }).join('');
     
     Swal.fire({
-      title: `Mis Reservas (${confirmedReservations.length})`,
-      html: reservasHTML,
-      width: 800,
-      confirmButtonColor: "#ffc843",
+      title: `<span style="color: #667eea;">📅 Mis Reservas</span>`,
+      html: `<div style="max-height: 400px; overflow-y: auto;">${reservasHTML}</div>`,
+      width: 500,
+      confirmButtonColor: "#667eea",
       confirmButtonText: "Cerrar"
     });
   };
 
-  // Función global para cancelar reservas desde el modal
   window.cancelReservation = async (reservationId) => {
     const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: "¿Quieres cancelar esta reserva?",
+      title: '¿Cancelar reserva?',
+      text: "Esta acción no se puede deshacer",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#ffc843',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#667eea',
+      cancelButtonColor: '#a0aec0',
       confirmButtonText: 'Sí, cancelar',
       cancelButtonText: 'No'
     });
@@ -90,74 +101,71 @@ export const Usuario = () => {
     }
   };
 
-  // Ver reservas de experiencias gastronómicas
-  const verReservasExperiencias = () => {
-    const confirmedReservations = store.eventReservations.filter(r => r.status === 'confirmed');
-    
-    if (!confirmedReservations || confirmedReservations.length === 0) {
+  const verExperiencias = () => {
+    if (confirmedExperiences.length === 0) {
       Swal.fire({
-        title: "Sin reservas de experiencias",
-        text: "No tienes reservas de experiencias activas",
+        title: "Sin experiencias",
+        text: "No tienes experiencias reservadas",
         icon: "info",
-        confirmButtonColor: "#ffc843",
+        confirmButtonColor: "#667eea",
       });
       return;
     }
     
-    const reservasHTML = confirmedReservations.map((reserva) => {
-      const fechaInicio = new Date(reserva.event_start_date).toLocaleDateString('es-ES', {
+    const tipoEvento = {
+      'cata': '🍷 Cata',
+      'pack': '🎁 Pack',
+      'taller': '👨‍🍳 Taller',
+      'degustacion': '🍽️ Degustación'
+    };
+    
+    const experienciasHTML = confirmedExperiences.map((reserva) => {
+      const fecha = new Date(reserva.event_start_date).toLocaleDateString('es-ES', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
       });
       
-      const tipoEvento = {
-        'cata': '🍷 Cata de Vinos',
-        'pack': '🎁 Pack Gastronómico',
-        'taller': '👨‍🍳 Taller de Cocina',
-        'degustacion': '🍽️ Degustación'
-      };
-      
       return `
-        <div style="border: 2px solid #667eea; padding: 15px; margin: 15px 0; border-radius: 10px; background-color: #fff;">
-          <h4 style="color: #667eea; margin-bottom: 10px;">${reserva.event_title}</h4>
-          ${reserva.event_image ? `<img src="${reserva.event_image}" style="width: 100%; max-width: 300px; border-radius: 8px; margin: 10px 0;" />` : ''}
-          <p style="margin: 5px 0;"><strong>${tipoEvento[reserva.event_type] || reserva.event_type}</strong></p>
-          <p style="margin: 5px 0;"><strong>🏪 Local:</strong> ${reserva.local_name}</p>
-          <p style="margin: 5px 0;"><strong>📍 Ciudad:</strong> ${reserva.event_city}</p>
-          <p style="margin: 5px 0;"><strong>📅 Fecha:</strong> ${fechaInicio}</p>
-          <p style="margin: 5px 0;"><strong>👥 Participantes:</strong> ${reserva.participants}</p>
-          <p style="margin: 5px 0;"><strong>💰 Precio:</strong> ${reserva.event_price}€</p>
-          ${reserva.notes ? `<p style="margin: 5px 0;"><strong>📝 Notas:</strong> ${reserva.notes}</p>` : ''}
+        <div style="border: 2px solid #38a169; padding: 15px; margin: 15px 0; border-radius: 12px; background: linear-gradient(135deg, #f0fff4, #c6f6d5);">
+          <div style="display: flex; gap: 15px; align-items: center;">
+            ${reserva.event_image ? `<img src="${reserva.event_image}" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover;" />` : ''}
+            <div style="flex: 1; text-align: left;">
+              <h4 style="color: #2d3748; margin: 0 0 5px 0; font-size: 1.1rem;">${reserva.event_title}</h4>
+              <p style="margin: 3px 0; color: #38a169; font-size: 0.85rem; font-weight: 600;">${tipoEvento[reserva.event_type] || reserva.event_type}</p>
+              <p style="margin: 3px 0; color: #718096; font-size: 0.9rem;">📅 ${fecha}</p>
+              <p style="margin: 3px 0; color: #718096; font-size: 0.9rem;">👥 ${reserva.participants} participantes</p>
+              <p style="margin: 3px 0; color: #718096; font-size: 0.9rem;">💰 ${reserva.event_price}€</p>
+            </div>
+          </div>
           <button 
-            onclick="cancelEventReservation(${reserva.id})"
-            style="background-color: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;"
+            onclick="window.cancelEventReservation(${reserva.id})"
+            style="width: 100%; margin-top: 10px; background: linear-gradient(135deg, #fc8181, #f56565); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600;"
           >
-            Cancelar Reserva
+            Cancelar Experiencia
           </button>
         </div>
       `;
     }).join('');
     
     Swal.fire({
-      title: "Mis Reservas de Experiencias",
-      html: `<div style="max-height: 500px; overflow-y: auto;">${reservasHTML}</div>`,
-      width: '600px',
-      confirmButtonColor: "#667eea",
+      title: `<span style="color: #38a169;">🎉 Mis Experiencias</span>`,
+      html: `<div style="max-height: 400px; overflow-y: auto;">${experienciasHTML}</div>`,
+      width: 500,
+      confirmButtonColor: "#38a169",
       confirmButtonText: "Cerrar"
     });
   };
 
-  // Función global para cancelar reservas de experiencias
   window.cancelEventReservation = async (reservationId) => {
     const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: "¿Quieres cancelar esta reserva de experiencia?",
+      title: '¿Cancelar experiencia?',
+      text: "Esta acción no se puede deshacer",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#667eea',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#38a169',
+      cancelButtonColor: '#a0aec0',
       confirmButtonText: 'Sí, cancelar',
       cancelButtonText: 'No'
     });
@@ -166,99 +174,200 @@ export const Usuario = () => {
       const success = await actions.cancelEventReservation(reservationId);
       if (success) {
         Swal.close();
-        verReservasExperiencias();
+        verExperiencias();
       }
     }
   };
 
+  const removeFavorite = async (localId) => {
+    const result = await Swal.fire({
+      title: '¿Eliminar de favoritos?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#667eea',
+      cancelButtonColor: '#a0aec0',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'No'
+    });
+    
+    if (result.isConfirmed) {
+      await actions.deleteFavorit(localId);
+      actions.getFavorit();
+    }
+  };
+
+  // Not logged in
+  if (!store.auth || localStorage.getItem("esUsuario") !== "true") {
+    return (
+      <div className="user-dashboard">
+        <div className="user-not-logged">
+          <span style={{ fontSize: '5rem' }}>👤</span>
+          <h2>Accede a tu perfil</h2>
+          <p>Inicia sesión para ver tus reservas, favoritos y más</p>
+          <Link to="/login" className="user-login-btn">
+            Iniciar Sesión
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="user-dashboard">
+        <div className="user-not-logged">
+          <div className="loading-spinner" style={{ width: '50px', height: '50px', border: '4px solid #e2e8f0', borderTopColor: '#667eea', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+          <p className="mt-3">Cargando perfil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const getInitials = () => {
+    const nombre = store.profiles?.nombre || '';
+    const apellido = store.profiles?.apellido || '';
+    return `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase();
+  };
+
   return (
-    <>
-      {store.auth &&
-      store.auth !== "" &&
-      store.auth !== undefined &&
-      localStorage.getItem("esUsuario") === "true" ? (
-        <div className="container-fluid">
-          <div className="user">
-            <div className="row mx-4">
-              <div className="d-flex">
-                <h1>
-                  Ey, {store.profiles?.nombre} {store.profiles?.apellido}
-                </h1>
-              </div>
+    <div className="user-dashboard">
+      {/* Header */}
+      <div className="user-header">
+        <div className="user-welcome">
+          <h1>¡Hola, {store.profiles?.nombre}!</h1>
+          <p>Bienvenido a tu espacio personal en Ruta 3B</p>
+        </div>
+      </div>
 
-              <div className="col-10 congrats">
-                <p>
-                  Enhorabuena, {store.profiles?.nombre}! <br></br>
-                  <br></br>A partir de ahora, eres miembro de la gran comunidad
-                  RUTA 3B, donde podrás encontrar esos sitios que cumplen con
-                  nuestra condición 3B, que sean buenos, bonitos y baratos en
-                  esta gran ciudad. <br></br>
-                  <br></br> No olvides dejar un comentario con tu experiencia y
-                  una valoración, tu opinión es importante para nosotros y el
-                  resto de la comunidad, además de participar en nuestro sorteo
-                  sorpresa mensual.
-                </p>
-              </div>
-
-              <div className="lineSeparating"></div>
-
-              <div className="text-center">
-                <button
-                  onClick={verReservas}
-                  type="button"
-                  className=" btn  btn-sm h-50 m-3"
-                  style={{
-                    backgroundColor: "rgb(255, 200, 67)",
-                    color: "black",
-                  }}
-                >
-                  Ver mis reservas ({store.reservations.filter(r => r.status === 'confirmed').length})
-                </button>
-                <button
-                  onClick={verReservasExperiencias}
-                  type="button"
-                  className=" btn  btn-sm h-50 m-3"
-                  style={{
-                    backgroundColor: "#667eea",
-                    color: "white",
-                  }}
-                >
-                  Ver experiencias ({store.eventReservations.filter(r => r.status === 'confirmed').length})
-                </button>
-              </div>
-              <div className="d-flex mx-auto">
-                <div className="col-12">
-                  <h2 className="text-center mx-auto">Mis sitios favoritos</h2>
-                </div>
-              </div>
-              <CarruselCard />
+      {/* Profile Card */}
+      <div className="user-profile-card">
+        <div className="user-profile-header">
+          <div className="user-avatar-container">
+            <div className="user-avatar">
+              {store.profiles?.foto_user ? (
+                <img src={store.profiles.foto_user} alt="Avatar" />
+              ) : (
+                getInitials()
+              )}
             </div>
           </div>
         </div>
-      ) : (
-        <div className="div-err-login text-center">
-          <h2>Primero debería registrarse!</h2>
-          <button
-            type="button"
-            className="btn  btn-sm h-50 m-3"
-            style={{
-              backgroundColor: "rgb(255, 200, 67)",
-              color: "black",
-            }}
-          >
-            <Link
-              className=" button-err"
-              to="/"
-              style={{
-                backgroundColor: "rgb(255, 200, 67)",
-                color: "black",
-              }}
-            >
-              Volver al Inicio
-            </Link>
-          </button>
+        <div className="user-profile-body">
+          <h2 className="user-profile-name">
+            {store.profiles?.nombre} {store.profiles?.apellido}
+          </h2>
+          <p className="user-profile-email">{store.profiles?.email}</p>
+          <span className="user-profile-badge">Miembro Ruta 3B</span>
         </div>
-      )}
-    </>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="user-stats-grid">
+        <div className="user-stat-card reservations" onClick={verReservas}>
+          <div className="user-stat-icon">📅</div>
+          <div className="user-stat-value">{confirmedReservations.length}</div>
+          <div className="user-stat-label">Reservas Activas</div>
+        </div>
+        
+        <div className="user-stat-card experiences" onClick={verExperiencias}>
+          <div className="user-stat-icon">🎉</div>
+          <div className="user-stat-value">{confirmedExperiences.length}</div>
+          <div className="user-stat-label">Experiencias</div>
+        </div>
+        
+        <div className="user-stat-card favorites">
+          <div className="user-stat-icon">❤️</div>
+          <div className="user-stat-value">{favorites.length}</div>
+          <div className="user-stat-label">Favoritos</div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="user-actions-grid">
+        <Link to="/restaurantes" className="user-action-btn primary">
+          <div className="action-icon">🍽️</div>
+          <div className="action-text">
+            <div className="action-title">Explorar Restaurantes</div>
+            <div className="action-subtitle">Descubre nuevos lugares</div>
+          </div>
+        </Link>
+        
+        <Link to="/experiencia-gastronomica" className="user-action-btn success">
+          <div className="action-icon">🎉</div>
+          <div className="action-text">
+            <div className="action-title">Experiencias</div>
+            <div className="action-subtitle">Catas, talleres y más</div>
+          </div>
+        </Link>
+        
+        <Link to="/mapa-ofertas" className="user-action-btn warning">
+          <div className="action-icon">🗺️</div>
+          <div className="action-text">
+            <div className="action-title">Mapa de Ofertas</div>
+            <div className="action-subtitle">Encuentra descuentos cerca</div>
+          </div>
+        </Link>
+        
+        <Link to="/mis-listas" className="user-action-btn danger">
+          <div className="action-icon">📋</div>
+          <div className="action-text">
+            <div className="action-title">Mis Listas</div>
+            <div className="action-subtitle">Organiza tus favoritos</div>
+          </div>
+        </Link>
+      </div>
+
+      {/* Favorites Section */}
+      <div className="user-favorites-section">
+        <div className="user-section-header">
+          <h3 className="user-section-title">❤️ Mis Favoritos</h3>
+          <Link to="/restaurantes" style={{ color: '#667eea', textDecoration: 'none', fontSize: '0.875rem' }}>
+            Ver todos →
+          </Link>
+        </div>
+        
+        {favorites.length > 0 ? (
+          <div className="user-favorites-grid">
+            {favorites.slice(0, 6).map((local, index) => (
+              <div key={index} className="user-favorite-card">
+                <img 
+                  src={local.foto || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800"} 
+                  alt={local.nombre}
+                  className="user-favorite-image"
+                />
+                <div className="user-favorite-content">
+                  <div className="user-favorite-name">{local.nombre}</div>
+                  <div className="user-favorite-location">
+                    📍 {local.ciudad}
+                  </div>
+                  <div className="user-favorite-actions">
+                    <Link 
+                      to={`/ruta-comida/${local.id}`} 
+                      className="user-favorite-btn view"
+                    >
+                      Ver detalles
+                    </Link>
+                    <button 
+                      onClick={() => removeFavorite(local.id)}
+                      className="user-favorite-btn remove"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="user-empty-state">
+            <div className="user-empty-icon">💔</div>
+            <p>Aún no tienes favoritos</p>
+            <Link to="/restaurantes" style={{ color: '#667eea' }}>
+              Explora restaurantes y añade tus favoritos
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

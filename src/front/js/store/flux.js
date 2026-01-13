@@ -84,21 +84,30 @@ const getState = ({ getStore, getActions, setStore }) => {
         return true;
       },
       getFavorit: (id_user, id_local) => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setStore({ likes: [] });
+          return;
+        }
         fetch(process.env.BACKEND_URL + "/api/user/favoritos", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         })
           .then((response) => {
+            if (!response.ok) {
+              return [];
+            }
             return response.json();
           })
           .then((data) =>
             setStore({
-              likes: data,
+              likes: Array.isArray(data) ? data : [],
             })
-          );
+          )
+          .catch(() => setStore({ likes: [] }));
       },
       addWent: (nombre) => {
         //Creamos la funcion para obtener el nombre con el Onclick
@@ -297,6 +306,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
       getEventReservations: async () => {
         try {
+          console.log("Fetching event reservations...");
           const response = await fetch(
             process.env.BACKEND_URL + "/api/event-reservations",
             {
@@ -308,15 +318,23 @@ const getState = ({ getStore, getActions, setStore }) => {
             }
           );
           
+          console.log("Event reservations response status:", response.status);
+          
           if (response.ok) {
             const data = await response.json();
+            console.log("Event reservations data received:", data);
             setStore({ eventReservations: data });
+            return data;
           } else {
+            const errorText = await response.text();
+            console.error("Event reservations error:", errorText);
             setStore({ eventReservations: [] });
+            return [];
           }
         } catch (err) {
           console.error("Error fetching event reservations:", err);
           setStore({ eventReservations: [] });
+          return [];
         }
       },
 
@@ -339,31 +357,12 @@ const getState = ({ getStore, getActions, setStore }) => {
           );
           
           if (response.ok) {
-            Swal.fire({
-              icon: 'success',
-              title: '¡Reserva confirmada!',
-              text: 'Tu reserva para la experiencia ha sido confirmada',
-              confirmButtonColor: '#667eea'
-            });
             getActions().getEventReservations();
             return true;
           } else {
-            const error = await response.json();
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: error.message || 'No se pudo crear la reserva',
-              confirmButtonColor: '#667eea'
-            });
             return false;
           }
         } catch (err) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error de conexión',
-            text: 'Error al crear la reserva',
-            confirmButtonColor: '#667eea'
-          });
           return false;
         }
       },
