@@ -1,27 +1,38 @@
 #!/usr/bin/env bash
-# Script de build para Render
+set -e
 
-set -o errexit
-
+echo "=== Backend deps ==="
 pip install pipenv
-pipenv install
+pipenv install --deploy --system
 
-# Ejecutar migraciones
-pipenv run flask db upgrade
+# ✅ CLAVE: que Python encuentre /src/api
+export PYTHONPATH="$(pwd)/src"
 
-# Cargar datos de prueba si la base está vacía
-pipenv run python -c "
-from src.app import app, db
-from src.api.models import Locales
+echo "=== DB migrations (alembic/flask-migrate) ==="
+cd src
+# Si ya tienes FLASK_APP en Render, esto va; si no, lo fijamos aquí también:
+export FLASK_APP=app.py
+flask db upgrade
+cd ..
 
-with app.app_context():
-    count = Locales.query.count()
-    print(f'Restaurantes en BD: {count}')
-    if count == 0:
-        print('Base de datos vacía - ejecutando seed...')
-        from src.api.seed_data import seed_all
-        seed_all()
-        print('Seed completado!')
-    else:
-        print('Base de datos ya tiene datos')
-"
+echo "=== Frontend build ==="
+cd front
+npm ci || npm install
+npm run build
+cd ..
+
+echo "=== Copy frontend build to public/ ==="
+rm -rf public
+mkdir -p public
+
+# ✅ Soporta build/ o dist/ (por si usas CRA o Vite)
+if [ -d "front/build" ]; then
+  cp -R front/build/* public/
+elif [ -d "front/dist" ]; then
+  cp -R front/dist/* public/
+else
+  echo "ERROR: No se encontró front/build ni front/dist tras npm run build"
+  exit 1
+fi
+
+echo "=== Build OK ==="
