@@ -6,20 +6,27 @@ pip install pipenv
 pipenv install --deploy --system
 
 echo "=== DB migrations (flask-migrate) ==="
-# Si tienes migrations, esto las aplica. Si no quieres que el deploy falle por migraciones,
-# puedes comentar estas 2 líneas.
+# Aplica migraciones si existen. No rompe el deploy si falla.
 if [ -d "migrations" ]; then
   pipenv run flask db upgrade || flask db upgrade || true
 fi
 
+echo "=== Seed DB (ONLY FIRST TIME) ==="
+# Solo se ejecuta si RUN_SEED=true en Render (Environment Variables)
+if [ "${RUN_SEED}" = "true" ]; then
+  echo "RUN_SEED=true -> ejecutando seed..."
+  pipenv run flask seed-db --restaurants 2000 || flask seed-db --restaurants 2000
+else
+  echo "RUN_SEED no es true -> saltando seed"
+fi
+
 echo "=== Frontend build (root) ==="
-# En tu repo el package.json está en raíz, así que se construye aquí
 npm ci
 npm run build
 
 echo "=== Frontend build OK ==="
-# Tu webpack.prod.js ya deja la salida en ./public
-# Aquí solo verificamos que exista lo esperado
+# Tu webpack.prod.js deja la salida en ./public
+# Verificamos que exista lo esperado
 if [ ! -f "public/index.html" ]; then
   echo "ERROR: No encuentro public/index.html después del build."
   echo "Contenido de public/:"
