@@ -1,0 +1,293 @@
+/* ============================================
+   MAPA DE OFERTAS STYLES
+   ============================================ */
+
+.mapa-container {
+    min-height: 100vh;
+    padding-bottom: 60px;
+}
+
+.mapa-header {
+    text-align: center;
+    padding: 60px 24px 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.mapa-header h1 {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: white;
+}
+
+.mapa-header p {
+    font-size: 18px;
+    opacity: 0.95;
+}
+
+.mapa-controls {
+    max-width: 1400px;
+    margin: -30px auto 30px;
+    padding: 0 24px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.mapa-controls .filter-group {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.mapa-legend {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.mapa-legend h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+.mapa-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 24px;
+}
+
+.map-wrapper {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-map {
+    height: 600px;
+    width: 100%;
+}
+
+/* Estilos para popups de Leaflet */
+.offer-popup {
+    padding: 8px;
+}
+
+.offer-popup h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.offer-title {
+    font-size: 14px;
+    color: #666;
+    margin: 4px 0;
+}
+
+.offer-discount {
+    font-size: 20px;
+    font-weight: 700;
+    color: #f5576c;
+    margin: 8px 0;
+}
+
+.offer-price {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin: 8px 0;
+}
+
+.offer-price .original {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 14px;
+}
+
+.offer-price .discounted {
+    font-size: 18px;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.offer-city {
+    font-size: 12px;
+    color: #999;
+    margin: 4px 0 0 0;
+}
+
+.mapa-stats {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    height: fit-content;
+}
+
+.mapa-stats h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #1a1a1a;
+}
+
+.city-stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.city-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.city-stat-item:hover {
+    background: #e9ecef;
+    transform: translateX(4px);
+}
+
+.city-rank {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.city-info {
+    flex: 1;
+}
+
+.city-info h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: #1a1a1a;
+}
+
+.city-info p {
+    font-size: 13px;
+    color: #666;
+    margin: 2px 0;
+}
+
+.avg-discount {
+    color: #f5576c !important;
+    font-weight: 600 !important;
+}
+
+.city-view-btn {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.city-view-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.total-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.stat-box {
+    text-align: center;
+    padding: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    color: white;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .mapa-content {
+        grid-template-columns: 1fr;
+    }
+
+    .mapa-controls {
+        flex-direction: column;
+    }
+
+    .leaflet-map {
+        height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .mapa-header h1 {
+        font-size: 32px;
+    }
+
+    .mapa-header p {
+        font-size: 16px;
+    }
+
+    .leaflet-map {
+        height: 300px;
+    }
+}

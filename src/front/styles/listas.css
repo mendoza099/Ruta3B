@@ -1,0 +1,24 @@
+.listas-container { padding: 40px 24px; max-width: 1400px; margin: 0 auto; }
+.listas-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+.listas-header h1 { font-size: 36px; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.btn-create-list { padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
+.listas-content { display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+.lists-sidebar { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
+.lists-sidebar h3 { margin: 0 0 16px 0; font-size: 18px; }
+.list-item { padding: 16px; background: #f8f9fa; border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s ease; }
+.list-item:hover, .list-item.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+.list-item h4 { margin: 0 0 4px 0; font-size: 16px; }
+.list-item span { font-size: 13px; opacity: 0.8; }
+.list-detail { background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
+.list-detail h2 { margin: 0 0 8px 0; font-size: 28px; }
+.draggable-list { margin-top: 24px; }
+.draggable-item { display: flex; align-items: center; gap: 16px; padding: 16px; background: #f8f9fa; border-radius: 12px; margin-bottom: 12px; cursor: move; }
+.draggable-item:hover { background: #e9ecef; }
+.drag-handle { font-size: 20px; color: #999; cursor: grab; }
+.position { font-weight: 700; color: #667eea; min-width: 30px; }
+.draggable-item img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
+.item-info { flex: 1; }
+.item-info h4 { margin: 0 0 4px 0; font-size: 16px; }
+.item-info p { margin: 0; font-size: 13px; color: #666; }
+.empty-state { text-align: center; padding: 80px 20px; color: #999; }
+@media (max-width: 768px) { .listas-content { grid-template-columns: 1fr; } }

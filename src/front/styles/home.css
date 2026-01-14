@@ -1,0 +1,302 @@
+/*
+    home.css: Modern Minimal Home Page Styles
+*/
+
+/* ============================================
+   HERO SECTION
+   ============================================ */
+.img-center {
+    height: 520px;
+    object-fit: cover;
+    position: relative;
+    filter: brightness(0.9);
+    transition: all 0.6s ease;
+}
+
+.img-center:hover {
+    filter: brightness(1);
+    transform: scale(1.02);
+}
+
+.text-center {
+    animation: fadeIn 1s ease-out;
+}
+
+/* ============================================
+   CONTAINERS
+   ============================================ */
+.container {
+    max-width: 1200px;
+    box-sizing: border-box;
+    margin: auto;
+    padding: 40px 24px;
+}
+
+.mini-container {
+    max-width: 1200px;
+    box-sizing: border-box;
+    margin: auto;
+    padding: 0 24px;
+}
+
+.container-fluid {
+    background: transparent;
+    padding: 60px 0;
+}
+
+/* ============================================
+   TYPOGRAPHY & TEXT STYLES
+   ============================================ */
+#title,
+h1,
+h2 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+.container h1 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: slideInFromBottom 0.8s ease-out;
+    margin-bottom: 24px;
+}
+
+.text-justify {
+    line-height: 1.8;
+    color: #666;
+    font-size: 17px;
+    animation: slideInFromBottom 1s ease-out 0.2s both;
+}
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
+.link {
+    list-style: none;
+}
+
+.nav-item {
+    margin: auto;
+    padding: 0;
+    text-decoration: none;
+    color: #667eea;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.nav-item:hover {
+    color: #764ba2;
+    transform: translateY(-2px);
+}
+
+.items-navbar-bottom {
+    width: 100%;
+}
+
+/* ============================================
+   CAROUSEL MODERN STYLES
+   ============================================ */
+.carousel {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    animation: fadeIn 1.2s ease-out 0.4s both;
+}
+
+.carousel-inner {
+    border-radius: 20px;
+}
+
+.carousel-item img {
+    transition: transform 0.6s ease;
+}
+
+.carousel-item.active img {
+    animation: float 3s ease-in-out infinite;
+}
+
+.carousel-caption {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    animation: slideInFromBottom 0.6s ease-out;
+}
+
+.carousel-caption h5 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #FFFFFF;
+}
+
+.carousel-caption p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.carousel-control-next-icon,
+.carousel-control-prev-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    padding: 16px;
+    width: 50px;
+    height: 50px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.carousel-control-next-icon:hover,
+.carousel-control-prev-icon:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.carousel-control-next,
+.carousel-control-prev {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.carousel-control-next:hover,
+.carousel-control-prev:hover {
+    opacity: 1;
+}
+
+.carousel-indicators button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    margin: 0 6px;
+    transition: all 0.3s ease;
+}
+
+.carousel-indicators button.active {
+    width: 30px;
+    border-radius: 6px;
+}
+
+/* ============================================
+   DIVIDERS
+   ============================================ */
+hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #667eea, transparent);
+    margin: 40px 0;
+    opacity: 0.3;
+}
+
+/* ============================================
+   HOME RESTAURANTS GRID 2x2
+   ============================================ */
+.home-restaurants-grid {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+}
+
+.home-restaurants-grid .card-minimal {
+    margin: 0;
+    max-width: 100%;
+    opacity: 0;
+    transform: translateY(60px) scale(0.9);
+}
+
+.home-restaurants-grid .card-minimal,
+.home-restaurants-grid .card-minimal-reverse {
+    flex-direction: row;
+}
+
+/* Animación cuando la card es visible */
+@keyframes fadeInUpHome {
+    from {
+        opacity: 0;
+        transform: translateY(60px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.home-restaurants-grid .card-minimal.card-visible {
+    animation: fadeInUpHome 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Delays escalonados para el grid */
+.home-restaurants-grid .card-minimal:nth-child(1).card-visible {
+    animation-delay: 0.1s;
+}
+
+.home-restaurants-grid .card-minimal:nth-child(2).card-visible {
+    animation-delay: 0.2s;
+}
+
+.home-restaurants-grid .card-minimal:nth-child(3).card-visible {
+    animation-delay: 0.3s;
+}
+
+.home-restaurants-grid .card-minimal:nth-child(4).card-visible {
+    animation-delay: 0.4s;
+}
+
+@media (max-width: 1024px) {
+    .home-restaurants-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 950px) {
+    .container-navbar {
+        flex-direction: column;
+        flex-wrap: wrap;
+    }
+
+    .items-navbar-bottom {
+        display: flex;
+        justify-content: end;
+    }
+    
+    .img-center {
+        height: 350px;
+    }
+    
+    .container h1 {
+        font-size: 2rem;
+    }
+    
+    .text-justify {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .carousel-caption h5 {
+        font-size: 18px;
+    }
+    
+    .carousel-caption p {
+        font-size: 13px;
+    }
+    
+    .carousel-control-next-icon,
+    .carousel-control-prev-icon {
+        width: 40px;
+        height: 40px;
+        padding: 12px;
+    }
+}

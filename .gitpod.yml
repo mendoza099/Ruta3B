@@ -1,0 +1,22 @@
+ports:
+  - port: 3000
+    visibility: public
+    onOpen: open-preview
+  - port: 3001
+    visibility: public
+    onOpen: ignore
+
+tasks:
+  - name: Backend
+    init: pip3 install flask flask-sqlalchemy flask-migrate flask-cors flask-jwt-extended werkzeug psycopg2-binary python-dotenv flask-admin flask-swagger gunicorn cloudinary geopy
+    command: |
+      export FLASK_APP=src/app.py
+      python3 -m flask run --host=0.0.0.0 --port=3001 --debug
+  
+  - name: Frontend
+    init: npm install
+    command: npm run start
+
+vscode:
+  extensions:
+    - esbenp.prettier-vscode
